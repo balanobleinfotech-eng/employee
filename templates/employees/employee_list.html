@@ -24,11 +24,29 @@
         <option value="HR" {% if role_filter == "HR" %}selected{% endif %}>HR</option>
         <option value="EMPLOYEE" {% if role_filter == "EMPLOYEE" %}selected{% endif %}>Employee</option>
       </select>
+      <select name="work_location" class="form-select" style="flex: 1; min-width: 140px;">
+        <option value="">All Locations</option>
+        <option value="ONSITE" {% if work_location_filter == "ONSITE" %}selected{% endif %}>🏢 On-Site Staff</option>
+        <option value="OFFSITE" {% if work_location_filter == "OFFSITE" %}selected{% endif %}>🌍 Off-Site Field</option>
+      </select>
       <button type="submit" class="btn btn-primary">Filter</button>
-      {% if query or role_filter or dept_filter %}
+      {% if query or role_filter or dept_filter or work_location_filter %}
       <a href="{% url 'employees:list' %}" class="btn btn-outline">Clear</a>
       {% endif %}
     </form>
+
+    <!-- Quick Location Filter Tabs -->
+    <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+      <a href="{% url 'employees:list' %}" class="btn btn-sm {% if not work_location_filter %}btn-primary{% else %}btn-outline{% endif %}" style="padding: 4px 12px; font-size: 12px; border-radius: 20px;">
+        👥 All Employees ({{ total_count }})
+      </a>
+      <a href="?work_location=ONSITE" class="btn btn-sm {% if work_location_filter == 'ONSITE' %}btn-primary{% else %}btn-outline{% endif %}" style="padding: 4px 12px; font-size: 12px; border-radius: 20px;">
+        🏢 On-Site Office ({{ onsite_count }})
+      </a>
+      <a href="?work_location=OFFSITE" class="btn btn-sm {% if work_location_filter == 'OFFSITE' %}btn-primary{% else %}btn-outline{% endif %}" style="padding: 4px 12px; font-size: 12px; border-radius: 20px;">
+        🌍 Off-Site Field ({{ offsite_count }})
+      </a>
+    </div>
   </div>
 
 <style>
@@ -111,7 +129,14 @@
             <span style="color: #94a3b8; font-size: 11px;">None</span>
             {% endif %}
           </td>
-          <td style="white-space: nowrap;">{{ emp.department.name|default:"Unassigned" }}</td>
+          <td style="white-space: nowrap;">
+            {{ emp.department.name|default:"Unassigned" }}<br/>
+            {% if emp.is_offsite_employee %}
+            <span class="badge badge-warning" style="padding: 1px 6px; font-size: 10px; font-weight: 600;">🌍 Off-Site</span>
+            {% else %}
+            <span class="badge badge-info" style="padding: 1px 6px; font-size: 10px; font-weight: 600;">🏢 On-Site</span>
+            {% endif %}
+          </td>
           <td style="white-space: nowrap;">{{ emp.designation.title|default:"Staff" }}</td>
           <td style="text-align: center; white-space: nowrap;">
             <span class="badge {% if emp.role == 'ADMIN' %}badge-danger{% elif emp.role == 'HR' %}badge-primary{% else %}badge-gray{% endif %}" style="padding: 2px 8px; font-size: 11px;">

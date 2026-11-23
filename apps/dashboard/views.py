@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Count, Sum, Q
 from apps.employees.models import Employee
-from apps.departments.models import Department, Designation
+from apps.departments.models import Department, Designation, Branch
 from apps.users.decorators import admin_required, hr_or_admin_required
 from apps.attendance.models import Attendance, DailyWork, AttendanceAuditLog, BiometricDevice, DailyWorkPlan
 from apps.attendance.forms import ManualAttendanceForm, DailyWorkForm, BiometricDeviceForm, DailyWorkPlanForm
@@ -378,6 +378,11 @@ def employee_dashboard_view(request):
 def admin_dashboard(request, profile):
     today = timezone.localdate()
 
+    # Biometric Device Management Handler
+    if request.method == 'POST' and request.POST.get('action') in ('add_device', 'test_device', 'sync_device', 'delete_device'):
+        from apps.attendance.views import device_manage
+        return device_manage(request)
+
     # 1. Handle Banner Image Upload/Update
     if request.method == 'POST' and request.POST.get('action') == 'upload_banner':
         banner_file = request.FILES.get('banner_image')
@@ -536,6 +541,18 @@ def admin_dashboard(request, profile):
 
         target_emp.is_active_employee = (request.POST.get('is_active_employee') == 'on')
 
+        work_type = request.POST.get('work_location_type')
+        if work_type:
+            target_emp.is_offsite_employee = (work_type == 'OFFSITE')
+        elif 'is_offsite_employee' in request.POST:
+            target_emp.is_offsite_employee = request.POST.get('is_offsite_employee') in ('true', '1', 'on', True)
+
+        branch_id = request.POST.get('branch')
+        if branch_id:
+            target_emp.branch = Branch.objects.filter(id=branch_id).first()
+        elif branch_id == '':
+            target_emp.branch = None
+
         new_password = request.POST.get('password', '').strip()
         if new_password:
             user_obj.set_password(new_password)
@@ -549,6 +566,18 @@ def admin_dashboard(request, profile):
         doc = request.FILES.get('document')
         if doc:
             target_emp.document = doc
+
+        work_type = request.POST.get('work_location_type')
+        if work_type:
+            target_emp.is_offsite_employee = (work_type == 'OFFSITE')
+        elif 'is_offsite_employee' in request.POST:
+            target_emp.is_offsite_employee = request.POST.get('is_offsite_employee') in ('true', '1', 'on', True)
+
+        branch_id = request.POST.get('branch')
+        if branch_id:
+            target_emp.branch = Branch.objects.filter(id=branch_id).first()
+        elif branch_id == '':
+            target_emp.branch = None
 
         target_emp.save()
 
@@ -745,6 +774,7 @@ def admin_dashboard(request, profile):
         'total_departments': total_departments,
         'latest_payroll_sum': latest_payroll_sum,
         'departments': departments,
+        'branches': Branch.objects.filter(is_active=True),
         'all_active_employees': all_active_employees,
         'all_calendar_users': Employee.objects.select_related('user', 'department').all(),
         'calendar_employee': calendar_employee,
@@ -772,6 +802,11 @@ def admin_dashboard(request, profile):
 
 def hr_dashboard(request, profile):
     today = timezone.localdate()
+
+    # Biometric Device Management Handler
+    if request.method == 'POST' and request.POST.get('action') in ('add_device', 'test_device', 'sync_device', 'delete_device'):
+        from apps.attendance.views import device_manage
+        return device_manage(request)
 
     # 1. Handle Banner Image Upload/Update for HR
     if request.method == 'POST' and request.POST.get('action') == 'upload_banner':
@@ -931,6 +966,18 @@ def hr_dashboard(request, profile):
         doc = request.FILES.get('document')
         if doc:
             target_emp.document = doc
+
+        work_type = request.POST.get('work_location_type')
+        if work_type:
+            target_emp.is_offsite_employee = (work_type == 'OFFSITE')
+        elif 'is_offsite_employee' in request.POST:
+            target_emp.is_offsite_employee = request.POST.get('is_offsite_employee') in ('true', '1', 'on', True)
+
+        branch_id = request.POST.get('branch')
+        if branch_id:
+            target_emp.branch = Branch.objects.filter(id=branch_id).first()
+        elif branch_id == '':
+            target_emp.branch = None
 
         target_emp.save()
 
@@ -1119,6 +1166,7 @@ def hr_dashboard(request, profile):
         # Display limit lists (5 records initially with scroll)
         'employee_details_and_leave_balance': Employee.objects.select_related('user', 'department', 'designation').all(),
         'departments': Department.objects.all(),
+        'branches': Branch.objects.filter(is_active=True),
         'leave_requests': hr_leave_requests,
         'employee_work_details': hr_work_details,
         'daily_work_plans': daily_work_plans,

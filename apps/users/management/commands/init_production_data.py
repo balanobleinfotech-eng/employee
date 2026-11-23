@@ -26,7 +26,7 @@ class Command(BaseCommand):
 
         # 2. Explicitly ensure default login accounts and passwords
         creds = [
-            ('NETCOM', 'Netcom@2026@Netcom', True, True, 'NETCOM', 'Administrator', 'admin@netcom.com', 'ADMIN'),
+            ('NETCOM', 'Netcom@2026@Netcom', True, True, 'NETCOM', 'Administrator', 'admin@ncpli.com', 'ADMIN'),
             ('hr', 'hr12345', False, False, 'HR', 'Manager', 'hr@netcom.com', 'HR'),
             ('emp', 'emp12345', False, False, 'Regular', 'Employee', 'emp@netcom.com', 'EMPLOYEE'),
             ('08092003', 'emp12345', False, False, 'Mathan', 'M', 'mathan003m@gmail.com', 'EMPLOYEE'),

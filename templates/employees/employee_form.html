@@ -2,41 +2,292 @@
 {% block page_title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div style="max-width: 800px; margin: 0 auto;">
+<div class="employee-form-wrapper" style="max-width: 900px; margin: 0 auto; padding: 10px;">
   <div class="panel">
-    <div class="panel-header">
-      <h3>{{ title }}</h3>
-      <a href="{% url 'employees:list' %}" class="btn btn-outline btn-sm">Cancel</a>
+    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <h3 style="margin: 0; font-size: 20px;">{{ title }}</h3>
+        <small style="color: var(--gray-600);">Configure staff credentials, employment classification, and on-site / off-site tracking mode.</small>
+      </div>
+      <a href="{% url 'employees:list' %}" class="btn btn-outline btn-sm">← Back to Staff Directory</a>
     </div>
-    <div class="panel-body">
-      <form method="POST" enctype="multipart/form-data">
+
+    <div class="panel-body" style="padding: 24px;">
+      <form method="POST" enctype="multipart/form-data" id="employeeForm">
         {% csrf_token %}
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-          {% for field in form %}
-          <div class="form-group" style="{% if field.name == 'address' or field.name == 'document' or field.field.widget.input_type == 'checkbox' %}grid-column: span 2;{% endif %}">
-            {% if field.field.widget.input_type == 'checkbox' %}
-            <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
-              <div style="padding-top: 2px;">{{ field }}</div>
-              <div>
-                <label for="{{ field.id_for_label }}" style="font-size: 13.5px; font-weight: 600; color: #1e293b; cursor: pointer; display: block; margin: 0;">{{ field.label }}</label>
-                {% if field.help_text %}<small style="color: #64748b; display: block; margin-top: 3px;">{{ field.help_text }}</small>{% endif %}
-              </div>
-            </div>
-            {% else %}
-            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }} {% if field.field.required %}<span style="color:var(--danger)">*</span>{% endif %}</label>
-            {{ field }}
-            {% if field.help_text %}<small style="color: var(--gray-600); display: block; margin-top: 4px;">{{ field.help_text }}</small>{% endif %}
-            {% endif %}
-            {% if field.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ field.errors.0 }}</div>{% endif %}
-          </div>
+
+        {% if form.non_field_errors %}
+        <div style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;">
+          {% for err in form.non_field_errors %}
+          <div>⚠️ {{ err }}</div>
           {% endfor %}
         </div>
-        <div style="margin-top: 24px; display: flex; gap: 12px;">
-          <button type="submit" class="btn btn-primary" style="padding: 12px 24px;">Save Employee Record</button>
-          <a href="{% url 'employees:list' %}" class="btn btn-outline">Cancel</a>
+        {% endif %}
+
+        <!-- SECTION 1: WORK LOCATION TYPE (ON-SITE vs OFF-SITE SPLIT) -->
+        <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <span style="font-size: 20px;">📍</span>
+            <div>
+              <h4 style="margin: 0; font-size: 16px; color: #0f172a;">Work Location & Attendance Tracking Mode</h4>
+              <small style="color: #64748b;">Select whether this employee is stationed at an office branch or works off-site in the field.</small>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 14px;">
+            {% for choice in form.work_location_type %}
+            <label class="work-mode-card" style="display: block; border: 2px solid #cbd5e1; border-radius: 8px; padding: 14px; cursor: pointer; background: #fff; transition: all 0.2s ease;">
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <div style="margin-top: 2px;">{{ choice.tag }}</div>
+                <div>
+                  <div style="font-weight: 700; font-size: 14px; color: #1e293b;">{{ choice.choice_label }}</div>
+                  <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
+                    {% if forloop.first %}
+                    Requires assigned branch. System validates punch-in within 100m office radius.
+                    {% else %}
+                    Field workers, engineers, client visits. Punch GPS is recorded without office geofence lock.
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+          {% if form.work_location_type.errors %}
+          <div style="color: var(--danger); font-size: 12px; margin-top: 6px;">{{ form.work_location_type.errors.0 }}</div>
+          {% endif %}
+
+          <!-- Assigned Branch (For On-Site Employees) -->
+          <div id="branchSelectionGroup" style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed #cbd5e1;">
+            <label class="form-label" for="{{ form.branch.id_for_label }}" style="font-weight: 600;">
+              🏢 {{ form.branch.label }} <span id="branchReqStar" style="color: var(--danger);">*</span>
+            </label>
+            {{ form.branch }}
+            {% if form.branch.help_text %}
+            <small style="color: var(--gray-600); display: block; margin-top: 4px;">{{ form.branch.help_text }}</small>
+            {% endif %}
+            {% if form.branch.errors %}
+            <div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.branch.errors.0 }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- SECTION 2: ACCOUNT & AUTHENTICATION -->
+        <div style="margin-bottom: 24px;">
+          <h4 style="font-size: 15px; color: #334155; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+            🔐 Account & System Access
+          </h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+            {% if form.username %}
+            <div class="form-group">
+              <label class="form-label" for="{{ form.username.id_for_label }}">Username <span style="color:var(--danger)">*</span></label>
+              {{ form.username }}
+              {% if form.username.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.username.errors.0 }}</div>{% endif %}
+            </div>
+            {% endif %}
+
+            {% if form.password %}
+            <div class="form-group">
+              <label class="form-label" for="{{ form.password.id_for_label }}">Password <span style="color:var(--danger)">*</span></label>
+              {{ form.password }}
+              {% if form.password.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.password.errors.0 }}</div>{% endif %}
+            </div>
+            {% endif %}
+
+            {% if form.new_password %}
+            <div class="form-group">
+              <label class="form-label" for="{{ form.new_password.id_for_label }}">Reset Password</label>
+              {{ form.new_password }}
+              {% if form.new_password.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.new_password.errors.0 }}</div>{% endif %}
+            </div>
+            {% endif %}
+
+            {% if form.employee_code %}
+            <div class="form-group">
+              <label class="form-label" for="{{ form.employee_code.id_for_label }}">Employee Code <span style="color:var(--danger)">*</span></label>
+              {{ form.employee_code }}
+              {% if form.employee_code.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.employee_code.errors.0 }}</div>{% endif %}
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+              <label class="form-label" for="{{ form.role.id_for_label }}">System Access Role <span style="color:var(--danger)">*</span></label>
+              {{ form.role }}
+              {% if form.role.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.role.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: PERSONAL INFORMATION -->
+        <div style="margin-bottom: 24px;">
+          <h4 style="font-size: 15px; color: #334155; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+            👤 Personal Details
+          </h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+            <div class="form-group">
+              <label class="form-label" for="{{ form.first_name.id_for_label }}">First Name <span style="color:var(--danger)">*</span></label>
+              {{ form.first_name }}
+              {% if form.first_name.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.first_name.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="{{ form.last_name.id_for_label }}">Last Name</label>
+              {{ form.last_name }}
+              {% if form.last_name.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.last_name.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="{{ form.email.id_for_label }}">Email Address</label>
+              {{ form.email }}
+              {% if form.email.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.email.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="{{ form.phone.id_for_label }}">Phone Number</label>
+              {{ form.phone }}
+              {% if form.phone.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.phone.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+              <label class="form-label" for="{{ form.address.id_for_label }}">Residential Address</label>
+              {{ form.address }}
+              {% if form.address.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.address.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: DEPARTMENT, DESIGNATION & DATES -->
+        <div style="margin-bottom: 24px;">
+          <h4 style="font-size: 15px; color: #334155; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+            💼 Department, Designation & Dates
+          </h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+            <div class="form-group">
+              <label class="form-label" for="{{ form.department.id_for_label }}">Department</label>
+              {{ form.department }}
+              {% if form.department.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.department.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="{{ form.designation.id_for_label }}">Designation / Job Title</label>
+              {{ form.designation }}
+              {% if form.designation.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.designation.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="{{ form.joining_date.id_for_label }}">Employee Joining Date <span style="color:var(--danger)">*</span></label>
+              {{ form.joining_date }}
+              {% if form.joining_date.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.joining_date.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 5: PAYROLL, LEAVES & DOCUMENTS -->
+        <div style="margin-bottom: 24px;">
+          <h4 style="font-size: 15px; color: #334155; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+            💰 Compensation, Leave & Uploads
+          </h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+            <div class="form-group">
+              <label class="form-label" for="{{ form.basic_salary.id_for_label }}">Basic Monthly Salary (₹)</label>
+              {{ form.basic_salary }}
+              {% if form.basic_salary.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.basic_salary.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="{{ form.casual_leave_balance.id_for_label }}">Casual Leave Balance (Days)</label>
+              {{ form.casual_leave_balance }}
+              {% if form.casual_leave_balance.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.casual_leave_balance.errors.0 }}</div>{% endif %}
+            </div>
+
+            {% if form.is_active_employee %}
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-top: 24px;">
+              {{ form.is_active_employee }}
+              <label for="{{ form.is_active_employee.id_for_label }}" style="font-weight: 600; cursor: pointer; margin: 0;">
+                Account Active & Employed
+              </label>
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+              <label class="form-label" for="{{ form.profile_picture.id_for_label }}">Profile Picture</label>
+              {{ form.profile_picture }}
+              {% if form.profile_picture.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.profile_picture.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="{{ form.document.id_for_label }}">Identity / Onboarding Document (PDF / Image)</label>
+              {{ form.document }}
+              {% if form.document.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.document.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap;">
+          <button type="submit" class="btn btn-primary" style="padding: 12px 28px; font-size: 14px; font-weight: 600;">
+            💾 Save Employee Record
+          </button>
+          <a href="{% url 'employees:list' %}" class="btn btn-outline" style="padding: 12px 20px;">Cancel</a>
         </div>
       </form>
     </div>
   </div>
 </div>
+
+<script>
+  // Dynamic handling of On-Site vs Off-Site styling and branch requirements
+  document.addEventListener('DOMContentLoaded', function() {
+    const radios = document.querySelectorAll('input[name="work_location_type"]');
+    const branchGroup = document.getElementById('branchSelectionGroup');
+    const branchReqStar = document.getElementById('branchReqStar');
+
+    function updateWorkLocationUI() {
+      let selected = 'ONSITE';
+      radios.forEach(r => {
+        const card = r.closest('.work-mode-card');
+        if (r.checked) {
+          selected = r.value;
+          if (card) {
+            card.style.borderColor = '#2563eb';
+            card.style.background = '#eff6ff';
+          }
+        } else {
+          if (card) {
+            card.style.borderColor = '#cbd5e1';
+            card.style.background = '#ffffff';
+          }
+        }
+      });
+
+      if (selected === 'OFFSITE') {
+        if (branchReqStar) branchReqStar.style.display = 'none';
+        if (branchGroup) {
+          branchGroup.style.opacity = '0.6';
+        }
+      } else {
+        if (branchReqStar) branchReqStar.style.display = 'inline';
+        if (branchGroup) {
+          branchGroup.style.opacity = '1';
+        }
+      }
+    }
+
+    radios.forEach(r => r.addEventListener('change', updateWorkLocationUI));
+    updateWorkLocationUI();
+  });
+</script>
+
+<style>
+  @media (max-width: 640px) {
+    .employee-form-wrapper {
+      padding: 4px !important;
+    }
+    .panel-body {
+      padding: 16px !important;
+    }
+    .form-group {
+      margin-bottom: 12px !important;
+    }
+  }
+</style>
 {% endblock %}

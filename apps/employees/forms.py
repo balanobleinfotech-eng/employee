@@ -40,17 +40,28 @@ class EmployeeCreateForm(forms.Form):
         queryset=Designation.objects.all(), required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
+    WORK_LOCATION_CHOICES = (
+        ('ONSITE', '🏢 On-Site Employee (Office Branch / 100m Geofence Radius)'),
+        ('OFFSITE', '🌍 Off-Site Employee (Field Worker / Client Sites / Geofence Exempt)'),
+    )
+    work_location_type = forms.ChoiceField(
+        choices=WORK_LOCATION_CHOICES,
+        initial='ONSITE',
+        required=False,
+        widget=forms.RadioSelect(attrs={'class': 'work-location-radio'}),
+        label="Work Location Type",
+        help_text="Select On-Site to bind to an office branch with 100m geofence, or Off-Site for field workers."
+    )
     branch = forms.ModelChoiceField(
         queryset=Branch.objects.filter(is_active=True), required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
         label="Assigned Office Branch",
-        help_text="Select office branch for 100-meter geofence verification (on-site employees)."
+        help_text="Office branch for on-site 100m geofence verification (for on-site employees)."
     )
     is_offsite_employee = forms.BooleanField(
         required=False,
-        widget=forms.CheckboxInput(attrs={'class': 'form-checkbox', 'style': 'width: 18px; height: 18px; cursor: pointer;'}),
-        label="Off-site / Field Employee",
-        help_text="Check if this employee works off-site/in the field (exempt from 100m office geofence)."
+        widget=forms.HiddenInput(),
+        initial=False
     )
     joining_date = forms.DateField(
         required=False,
@@ -93,6 +104,20 @@ class EmployeeCreateForm(forms.Form):
         val = self.cleaned_data.get('joining_date')
         return val or timezone.localdate()
 
+    def clean(self):
+        cleaned_data = super().clean()
+        wtype = cleaned_data.get('work_location_type') or 'ONSITE'
+        cleaned_data['work_location_type'] = wtype
+        if wtype == 'OFFSITE':
+            cleaned_data['is_offsite_employee'] = True
+        else:
+            cleaned_data['is_offsite_employee'] = False
+            if not cleaned_data.get('branch'):
+                default_b = Branch.objects.filter(is_active=True).first()
+                if default_b:
+                    cleaned_data['branch'] = default_b
+        return cleaned_data
+
     def save(self):
         cd = self.cleaned_data
         is_admin = cd['role'] == 'ADMIN'
@@ -129,6 +154,14 @@ class EmployeeUpdateForm(forms.ModelForm):
     first_name = forms.CharField(max_length=150, widget=forms.TextInput(attrs={'class': 'form-input'}))
     last_name = forms.CharField(max_length=150, required=False, widget=forms.TextInput(attrs={'class': 'form-input'}))
     email = forms.EmailField(required=False, widget=forms.EmailInput(attrs={'class': 'form-input'}))
+    work_location_type = forms.ChoiceField(
+        choices=EmployeeCreateForm.WORK_LOCATION_CHOICES,
+        initial='ONSITE',
+        required=False,
+        widget=forms.RadioSelect(attrs={'class': 'work-location-radio'}),
+        label="Work Location Type",
+        help_text="Select On-Site to bind to an office branch with 100m geofence, or Off-Site for field employees."
+    )
     new_password = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Enter new password to reset (or leave blank)'})
@@ -147,7 +180,7 @@ class EmployeeUpdateForm(forms.ModelForm):
             'department': forms.Select(attrs={'class': 'form-select'}),
             'designation': forms.Select(attrs={'class': 'form-select'}),
             'branch': forms.Select(attrs={'class': 'form-select'}),
-            'is_offsite_employee': forms.CheckboxInput(attrs={'class': 'form-checkbox', 'style': 'width: 18px; height: 18px; cursor: pointer;'}),
+            'is_offsite_employee': forms.HiddenInput(),
             'joining_date': forms.DateInput(attrs={'class': 'form-input', 'type': 'date'}),
             'phone': forms.TextInput(attrs={'class': 'form-input'}),
             'address': forms.Textarea(attrs={'class': 'form-input', 'rows': 2}),
@@ -159,11 +192,10 @@ class EmployeeUpdateForm(forms.ModelForm):
         }
         labels = {
             'branch': 'Assigned Office Branch',
-            'is_offsite_employee': 'Off-site / Field Employee (Exempt from 100m Geofence)',
+            'is_offsite_employee': 'Off-site Employee Status',
         }
         help_texts = {
-            'branch': 'Office location for 100m geofence radius check.',
-            'is_offsite_employee': 'Check if employee works in the field/remotely without 100m office geofence constraint.',
+            'branch': 'Office location for 100m geofence radius check (on-site employees).',
         }
 
     def __init__(self, *args, **kwargs):
@@ -172,8 +204,16 @@ class EmployeeUpdateForm(forms.ModelForm):
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
             self.fields['email'].initial = self.instance.user.email
+            self.fields['work_location_type'].initial = 'OFFSITE' if self.instance.is_offsite_employee else 'ONSITE'
             if self.instance.raw_password:
                 self.fields['new_password'].initial = self.instance.raw_password
+
+    def clean(self):
+        cleaned_data = super().clean()
+        wtype = cleaned_data.get('work_location_type')
+        if wtype:
+            cleaned_data['is_offsite_employee'] = (wtype == 'OFFSITE')
+        return cleaned_data
 
     def save(self, commit=True):
         employee = super().save(commit=False)
@@ -181,6 +221,7 @@ class EmployeeUpdateForm(forms.ModelForm):
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
         user.email = self.cleaned_data['email']
+        employee.is_offsite_employee = self.cleaned_data.get('is_offsite_employee', employee.is_offsite_employee)
 
         new_pwd = self.cleaned_data.get('new_password', '').strip()
         if new_pwd:

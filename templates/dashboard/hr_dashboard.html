@@ -499,6 +499,69 @@
   </div>
 </div>
 
+<!-- ================= BIOMETRIC ATTENDANCE MACHINE NETWORK ================= -->
+<div class="panel" id="hrBiometricSection" style="margin-top: 24px;">
+  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
+        <span>🔌</span> Biometric Attendance Machine Network
+      </h3>
+      <small style="color: var(--gray-600);">Direct TCP/IP hardware socket sync (ZKTeco port 4370) with automated punch-log extraction and duplicate prevention</small>
+    </div>
+    <button type="button" onclick="openDeviceModal()" class="btn btn-primary btn-sm" style="font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+      ➕ Add Biometric Machine
+    </button>
+  </div>
+  <div class="panel-body">
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+      {% for dev in biometric_devices %}
+      <div style="background: #ffffff; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <b style="font-size: 15px; color: #0f172a;">{{ dev.name }}</b>
+            <span class="badge {% if dev.is_active %}badge-success{% else %}badge-gray{% endif %}">{{ dev.protocol }}</span>
+          </div>
+          <div style="font-size: 12.5px; color: #475569; line-height: 1.5;">
+            <div>🌐 IP: <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #1e293b;">{{ dev.ip_address }}:{{ dev.port }}</code></div>
+            <div>📟 Model: <b>{{ dev.device_model }}</b></div>
+            <div style="margin-top: 4px;">📡 Status: <b style="color: {% if dev.last_status == 'OK' or dev.last_status == 'Online' %}#16a34a{% else %}#dc2626{% endif %};">{{ dev.last_status }}</b></div>
+            <div>🕒 Last Sync: <span style="color: #64748b;">{{ dev.last_sync|date:"M d, Y H:i"|default:"Never" }}</span></div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--gray-100);">
+          <form method="POST" action="{% url 'attendance:device_manage' %}" style="margin: 0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="test_device">
+            <input type="hidden" name="device_id" value="{{ dev.id }}">
+            <button type="submit" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 4px;">⚡ Ping Test</button>
+          </form>
+          <form method="POST" action="{% url 'attendance:device_manage' %}" style="margin: 0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="sync_device">
+            <input type="hidden" name="device_id" value="{{ dev.id }}">
+            <button type="submit" class="btn btn-success btn-sm" style="display: inline-flex; align-items: center; gap: 4px;">🔄 Sync Punches</button>
+          </form>
+          <form method="POST" action="{% url 'attendance:device_manage' %}" style="margin: 0;" onsubmit="return confirm('Permanently remove biometric terminal {{ dev.name }}?');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_device">
+            <input type="hidden" name="device_id" value="{{ dev.id }}">
+            <button type="submit" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center; gap: 4px;">🗑️ Delete</button>
+          </form>
+        </div>
+      </div>
+      {% empty %}
+      <div style="grid-column: 1 / -1; text-align: center; padding: 36px 20px; background: #f8fafc; border: 2px dashed var(--gray-300); border-radius: var(--radius-sm);">
+        <div style="font-size: 32px; margin-bottom: 8px;">🔌</div>
+        <h4 style="margin: 0 0 6px 0; color: #334155;">No Biometric Attendance Terminals Registered</h4>
+        <p style="margin: 0 0 16px 0; font-size: 13px; color: #64748b;">Connect your local office ZKTeco or compatible hardware socket terminal for automated employee punches.</p>
+        <button type="button" onclick="openDeviceModal()" class="btn btn-primary btn-sm">➕ Add Biometric Machine Now</button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
 <!-- Biometric Hardware Sync & Manual Attendance Correction -->
 <div class="grid-2">
   <!-- Comprehensive Employee Reports & Data Export Hub -->
@@ -843,15 +906,21 @@
             </span>
           </td>
           <td>
-            {% if emp.is_active_employee %}
-            <span class="badge badge-success">Active</span>
+            {% if emp.is_offsite_employee %}
+            <span class="badge" style="background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; font-weight: 600;">🌍 Off-Site</span>
             {% else %}
-            <span class="badge badge-gray">Inactive</span>
+            <span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; font-weight: 600;">🏢 On-Site</span>
+            {% endif %}
+            <br/>
+            {% if emp.is_active_employee %}
+            <span class="badge badge-success" style="margin-top: 4px;">Active</span>
+            {% else %}
+            <span class="badge badge-gray" style="margin-top: 4px;">Inactive</span>
             {% endif %}
           </td>
           <td>
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-              <button type="button" onclick="openHrEditEmployeeModal('{{ emp.id }}', '{{ emp.employee_code }}', '{{ emp.user.first_name }}', '{{ emp.user.last_name }}', '{{ emp.email }}', '{{ emp.phone }}', '{{ emp.department.id|default:'' }}', '{{ emp.casual_leave_balance }}', '{{ emp.raw_password|default:'' }}', '{{ emp.joining_date|date:'Y-m-d' }}')" class="btn btn-primary btn-sm" style="font-weight: 600;">
+              <button type="button" onclick="openHrEditEmployeeModal('{{ emp.id }}', '{{ emp.employee_code }}', '{{ emp.user.first_name }}', '{{ emp.user.last_name }}', '{{ emp.email }}', '{{ emp.phone }}', '{{ emp.department.id|default:'' }}', '{{ emp.casual_leave_balance }}', '{{ emp.raw_password|default:'' }}', '{{ emp.joining_date|date:'Y-m-d' }}', '{{ emp.is_offsite_employee|yesno:'true,false' }}', '{{ emp.branch.id|default:'' }}')" class="btn btn-primary btn-sm" style="font-weight: 600;">
                 ✏️ Edit Employee
               </button>
               <a href="{% url 'employees:edit' emp.id %}" class="btn btn-outline btn-sm" title="Edit Full Employee Profile">
@@ -1172,6 +1241,25 @@
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
+            <label class="form-label" style="font-weight: 600;">📍 Work Location Type</label>
+            <select name="work_location_type" id="hrModalEmpWorkType" class="form-select" onchange="toggleHrBranchField()">
+              <option value="ONSITE">🏢 On-Site Office (Subject to 100m Geofence)</option>
+              <option value="OFFSITE">🌍 Off-Site / Field Work (Exempt from Geofence)</option>
+            </select>
+          </div>
+          <div class="form-group" id="hrModalBranchGroup">
+            <label class="form-label" style="font-weight: 600;">🏢 Office Branch</label>
+            <select name="branch" id="hrModalEmpBranch" class="form-select">
+              <option value="">-- Main Head Office (Default) --</option>
+              {% for b in branches %}
+              <option value="{{ b.id }}">{{ b.name }} ({{ b.city|default:"HQ" }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
             <label class="form-label">Profile Picture</label>
             <input type="file" name="profile_picture" id="hrModalEmpPic" class="form-input" accept="image/*">
           </div>
@@ -1254,6 +1342,61 @@
         </div>
       </div>
       {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Add Biometric Device Modal for HR -->
+<div class="modal-overlay" id="addDeviceModal">
+  <div class="modal-dialog" style="max-width: 580px;">
+    <div class="modal-header">
+      <h3 style="margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px;">
+        <span>➕</span> Register Biometric Attendance Machine
+      </h3>
+      <button type="button" class="modal-close" onclick="closeDeviceModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 20px;">
+      <form method="POST" action="{% url 'attendance:device_manage' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_device">
+
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 600;">Device / Terminal Name <span style="color:var(--danger)">*</span></label>
+          {{ device_form.name }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 600;">Hardware Model</label>
+            {{ device_form.device_model }}
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 600;">Communication Protocol</label>
+            {{ device_form.protocol }}
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 600;">IP Address / Local Host <span style="color:var(--danger)">*</span></label>
+            {{ device_form.ip_address }}
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-weight: 600;">Port</label>
+            {{ device_form.port }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="font-weight: 600;">Communication Key (Passcode)</label>
+          {{ device_form.communication_key }}
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
+          <button type="button" class="btn btn-outline" onclick="closeDeviceModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="font-weight: 600;">Save & Connect Terminal</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -1355,7 +1498,7 @@
     });
   }
 
-  function openHrEditEmployeeModal(id, code, first, last, email, phone, deptId, leaveBal, password, joiningDate) {
+  function openHrEditEmployeeModal(id, code, first, last, email, phone, deptId, leaveBal, password, joiningDate, isOffsite, branchId) {
     document.getElementById('hrModalEmpId').value = id;
     document.getElementById('hrModalEmpCode').value = code;
     document.getElementById('hrModalEmpFirstName').value = first;
@@ -1370,10 +1513,32 @@
     if (document.getElementById('hrModalEmpPassword')) {
       document.getElementById('hrModalEmpPassword').value = password || '';
     }
+    if (document.getElementById('hrModalEmpWorkType')) {
+      document.getElementById('hrModalEmpWorkType').value = (isOffsite === 'true' || isOffsite === true) ? 'OFFSITE' : 'ONSITE';
+      toggleHrBranchField();
+    }
+    if (document.getElementById('hrModalEmpBranch')) {
+      document.getElementById('hrModalEmpBranch').value = branchId || '';
+    }
     document.getElementById('hrEditEmployeeModal').classList.add('active');
   }
   function closeHrEditEmployeeModal() {
     document.getElementById('hrEditEmployeeModal').classList.remove('active');
+  }
+
+  function toggleHrBranchField() {
+    const wt = document.getElementById('hrModalEmpWorkType');
+    const grp = document.getElementById('hrModalBranchGroup');
+    if (wt && grp) {
+      grp.style.display = (wt.value === 'OFFSITE') ? 'none' : 'block';
+    }
+  }
+
+  function openDeviceModal() {
+    document.getElementById('addDeviceModal').classList.add('active');
+  }
+  function closeDeviceModal() {
+    document.getElementById('addDeviceModal').classList.remove('active');
   }
 
   function toggleHrPw(empId) {

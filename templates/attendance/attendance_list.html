@@ -273,6 +273,12 @@
               <input type="hidden" name="device_id" value="{{ dev.id }}">
               <button type="submit" class="btn btn-success btn-sm" style="width: 100%;">🔄 Sync Logs</button>
             </form>
+            <form method="POST" action="{% url 'attendance:device_manage' %}" onsubmit="return confirm('Permanently remove biometric terminal {{ dev.name }}?');">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_device">
+              <input type="hidden" name="device_id" value="{{ dev.id }}">
+              <button type="submit" class="btn btn-danger btn-sm" style="width: 100%;">🗑️ Delete</button>
+            </form>
           </div>
         </div>
       </div>

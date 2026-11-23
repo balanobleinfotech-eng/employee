@@ -55,8 +55,9 @@ def employee_list(request):
     query = request.GET.get('q', '').strip()
     role_filter = request.GET.get('role', '')
     dept_filter = request.GET.get('department', '')
+    work_location_filter = request.GET.get('work_location', '')
 
-    employees = Employee.objects.select_related('user', 'department', 'designation').all()
+    employees = Employee.objects.select_related('user', 'department', 'designation', 'branch').all()
 
     if query:
         employees = employees.filter(
@@ -72,6 +73,10 @@ def employee_list(request):
         employees = employees.filter(role=role_filter)
     if dept_filter:
         employees = employees.filter(department_id=dept_filter)
+    if work_location_filter == 'ONSITE':
+        employees = employees.filter(is_offsite_employee=False)
+    elif work_location_filter == 'OFFSITE':
+        employees = employees.filter(is_offsite_employee=True)
 
     daily_work_plans = DailyWorkPlan.objects.select_related('employee__user', 'assigned_by').order_by('-work_date', '-created_at')[:40]
     all_active_employees = Employee.objects.filter(is_active_employee=True).select_related('user', 'department').order_by('employee_code')
@@ -83,6 +88,9 @@ def employee_list(request):
         'query': query,
         'role_filter': role_filter,
         'dept_filter': dept_filter,
+        'work_location_filter': work_location_filter,
+        'onsite_count': Employee.objects.filter(is_offsite_employee=False).count(),
+        'offsite_count': Employee.objects.filter(is_offsite_employee=True).count(),
         'total_count': employees.count(),
         'daily_work_plans': daily_work_plans,
         'all_active_employees': all_active_employees,

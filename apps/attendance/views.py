@@ -416,8 +416,14 @@ def device_manage(request):
                 messages.success(request, msg)
             else:
                 messages.info(request, msg)
+        elif action == 'delete_device':
+            device_id = request.POST.get('device_id')
+            device = get_object_or_404(BiometricDevice, id=device_id)
+            dev_name = device.name
+            device.delete()
+            messages.success(request, f"Biometric machine '{dev_name}' has been deleted successfully.")
 
-    return redirect('attendance:list')
+    return redirect(request.META.get('HTTP_REFERER') or 'attendance:list')
 
 
 @login_required
