@@ -1,0 +1,847 @@
+{% extends 'base.html' %}
+{% block page_title %}Report{% endblock %}
+
+{% block content %}
+{% load static %}
+<!-- Modern Hero Banner with Employee Profile & Background Banner (Matching Dashboard Banner Style) -->
+{% with emp=profile|default:current_profile %}
+<div class="employee-hero-banner hero-banner-dashboard-container" style="position: relative; margin-bottom: 24px; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 22px rgba(0, 0, 0, 0.04); border: 1.5px solid #edf2f7; background: #e0f2fe url('{% static 'images/banners/daily_works_bg.png' %}') no-repeat right center; background-size: cover; min-height: 185px; width: 100%; padding: 26px 32px; display: flex; align-items: center; justify-content: space-between;">
+  
+  <div class="hero-left-content" style="display: flex; align-items: center; gap: 20px; z-index: 2; max-width: 580px;">
+    <!-- Circular Avatar Box -->
+    <div class="hero-avatar-box" style="width: 76px; height: 76px; border-radius: 50%; border: 3px solid #ffffff; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.12); flex-shrink: 0; background: #e0f2fe; display: flex; align-items: center; justify-content: center;">
+      {% if emp and emp.profile_picture %}
+      <img src="{{ emp.profile_picture.url }}" alt="{{ emp.display_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+      {% else %}
+      <span style="font-size: 28px; font-weight: 800; color: #0284c7;">{{ request.user.first_name|default:request.user.username|make_list|first|upper }}</span>
+      {% endif %}
+    </div>
+
+    <!-- Dynamic Text Content Group on Top of Banner -->
+    <div class="hero-title-group" style="display: flex; flex-direction: column; gap: 4px;">
+      <div style="font-size: 15px; font-weight: 500; color: #334155;">Daily Work Planning &amp; Tasks</div>
+      <h2 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0; line-height: 1.2;">
+        {{ emp.user.first_name|default:emp.display_name }}!
+      </h2>
+      <div class="hero-meta-row" style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: #475569; margin-top: 2px;">
+        <span>Staff ID : <b>{{ emp.employee_code }}</b></span>
+        <span>&bull;</span>
+        <span>Role : <b>{{ emp.designation.title|default:emp.get_role_display }}</b></span>
+      </div>
+      <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <span class="hero-glow-pill" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: #2563eb; background: rgba(255, 255, 255, 0.88); padding: 5px 12px; border-radius: 20px; box-shadow: 0 2px 8px rgba(37,99,235,0.08); backdrop-filter: blur(4px);">
+          📋 Plan, track, and log your daily milestones and tasks!
+        </span>
+        <span class="hero-glow-pill" style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #059669; background: rgba(255, 255, 255, 0.88); padding: 5px 10px; border-radius: 20px; box-shadow: 0 2px 8px rgba(5,150,105,0.08); backdrop-filter: blur(4px);">
+          📍 Mandatory Location &amp; Camera Proof
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side Quick Export Buttons -->
+  <div style="z-index: 2; display: flex; flex-direction: column; gap: 8px;">
+    {% if is_management %}
+    <div style="background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px); padding: 10px 14px; border-radius: 14px; border: 1px solid #cbd5e1; box-shadow: 0 4px 12px rgba(0,0,0,0.06); text-align: right;">
+      <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">Daily Activity Reports</div>
+      <div style="display: flex; gap: 8px;">
+        <a href="{% url 'reports:complete_export' %}?category=daily_work&format=excel" class="btn btn-sm btn-success" style="font-weight: 700; font-size: 12px; padding: 6px 12px; border-radius: 8px;">
+          📊 Export Excel
+        </a>
+        <a href="{% url 'reports:complete_export' %}?category=daily_work&format=pdf" class="btn btn-sm btn-primary" style="font-weight: 700; font-size: 12px; padding: 6px 12px; border-radius: 8px;">
+          📄 Export PDF
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endwith %}
+
+<!-- Two-Column Layout -->
+<div class="grid-2" style="align-items: start; gap: 24px;">
+  <!-- Left Column: Post Daily Work Report -->
+  <div class="modern-surface-card" style="box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-radius: 18px;">
+    <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">Post Daily Work Report</h3>
+        <p style="font-size: 13px; color: #64748b; margin: 0;">Mandatory location tracking with verified On-Site / Off-Site camera submission</p>
+      </div>
+      <span id="activeModeBadge" class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700; border-radius: 8px; font-size: 12px; padding: 6px 10px;">
+        🏢 On-Site Work
+      </span>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="dailyWorkForm">
+      {% csrf_token %}
+
+      <!-- 1. Work Mode Split: On-Site vs. Off-Site Selection -->
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <span>1. Work Mode Classification <span style="color: #e11d48;">*</span></span>
+          <span style="font-size: 11.5px; color: #64748b; font-weight: normal;">Select your work location mode</span>
+        </label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <!-- On-Site Selection Button -->
+          <button type="button" id="btnModeOnsite" onclick="selectWorkMode(false)" style="padding: 12px 14px; border-radius: 12px; font-weight: 700; font-size: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 2px solid #0284c7; background: #f0f9ff; color: #0369a1; cursor: pointer; transition: all 0.2s ease;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 16px;">🏢</span>
+              <span>On-Site Office</span>
+            </div>
+            <small style="font-size: 11px; opacity: 0.85; font-weight: 500;">Office Premises • Camera / File Upload</small>
+          </button>
+
+          <!-- Off-Site Selection Button -->
+          <button type="button" id="btnModeOffsite" onclick="selectWorkMode(true)" style="padding: 12px 14px; border-radius: 12px; font-weight: 700; font-size: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 2px solid #e2e8f0; background: #f8fafc; color: #64748b; cursor: pointer; transition: all 0.2s ease;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 16px;">📍</span>
+              <span>Off-Site Field</span>
+            </div>
+            <small style="font-size: 11px; opacity: 0.85; font-weight: 500;">Client Site / Field • Camera-Only Proof</small>
+          </button>
+        </div>
+        <!-- Hidden input bound to Django Form is_offsite -->
+        <div style="display: none;">
+          {{ form.is_offsite }}
+        </div>
+      </div>
+
+      <!-- 2. Mandatory Location Field -->
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+          <span>2. Location / Work Site Details <span style="color: #e11d48;">* (Mandatory)</span></span>
+          <button type="button" id="btnDetectGps" onclick="detectCurrentLocation()" style="background: #eff6ff; border: 1px solid #bfdbfe; color: #2563eb; font-size: 11.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 8px; transition: all 0.2s ease;">
+            <span>📍 Detect GPS Location</span>
+          </button>
+        </label>
+        <div style="position: relative;">
+          {{ form.location_notes }}
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+          <small id="locationHelpText" style="font-size: 11.5px; color: #64748b;">
+            Default office location set. Update if working at a specific branch or client premises.
+          </small>
+          <span id="gpsStatusBadge" style="display: none; font-size: 11px; font-weight: 700; color: #16a34a;">
+            ✅ GPS Verified
+          </span>
+        </div>
+      </div>
+
+      <!-- 3. Project Name & Module -->
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+          3. Project / Module <span style="color: #e11d48;">*</span>
+        </label>
+        {{ form.project_name }}
+      </div>
+
+      <!-- 4. Work Details -->
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+          4. Task Progress &amp; Details <span style="color: #e11d48;">*</span>
+        </label>
+        {{ form.work_details }}
+      </div>
+
+      <!-- 5. Status -->
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px;">5. Task Status</label>
+        {{ form.status }}
+      </div>
+
+      <!-- 6. Photo Proof & Restrictions (Off-Site = Camera Only; On-Site = Camera or File) -->
+      <div class="form-group" style="margin-bottom: 22px;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+          <span>6. Activity / Site Photo Verification</span>
+          <span id="photoModeTag" style="font-size: 11.5px; color: #0284c7; font-weight: 600;">
+            Camera or File Upload Allowed
+          </span>
+        </label>
+
+        <!-- Dynamic Photo Option Selector for On-Site Mode -->
+        <div id="onsitePhotoTabs" style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <button type="button" id="tabUploadFile" onclick="switchPhotoInputMode('file')" class="btn btn-sm" style="border-radius: 8px; font-weight: 700; font-size: 12px; padding: 6px 14px; background: #e0f2fe; color: #0369a1; border: 1.5px solid #0284c7;">
+            📁 Upload File / Screenshot
+          </button>
+          <button type="button" id="tabSnapCamera" onclick="switchPhotoInputMode('camera')" class="btn btn-sm" style="border-radius: 8px; font-weight: 700; font-size: 12px; padding: 6px 14px; background: #f8fafc; color: #64748b; border: 1.5px solid #cbd5e1;">
+            📸 Snap with Camera
+          </button>
+        </div>
+
+        <!-- Strict Off-Site Camera Warning Notice (Shown when Off-Site selected) -->
+        <div id="offsiteCameraNotice" style="display: none; padding: 10px 14px; background: #fff1f2; border: 1.5px solid #fecdd3; border-radius: 10px; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">🔒</span>
+            <div>
+              <div style="font-size: 12.5px; font-weight: 700; color: #9f1239;">Strict Live Camera Verification Enforced</div>
+              <div style="font-size: 11.5px; color: #be123c;">Off-site field reports require live camera capture. File gallery uploads are restricted.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section A: Standard File Drag & Drop (Only for On-Site mode) -->
+        <div id="fileUploadContainer" style="display: block;">
+          <label for="workImageInput" class="modern-dropzone" id="dropZoneContainer" style="display: block; cursor: pointer; text-align: center; border: 2px dashed #cbd5e1; border-radius: 14px; padding: 20px 18px; background: #f8fafc; transition: all 0.2s ease;">
+            <div style="margin-bottom: 6px;">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <div style="font-size: 13.5px; font-weight: 700; color: #1e293b;" id="dropZoneTitle">Click to choose screenshot or photo</div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 3px;" id="dropZoneSubtitle">Browse from computer, tablet, or phone (PNG, JPG, WEBP, GIF • Max 10MB)</div>
+            <div style="margin-top: 10px;">
+              <span class="btn btn-outline btn-sm" id="btnBrowseFile" style="pointer-events: none; border-color: #0284c7; color: #0284c7; font-weight: 700; padding: 5px 12px; border-radius: 8px; background: #fff;">
+                📁 Browse File
+              </span>
+            </div>
+          </label>
+
+          <!-- Hidden Django file input -->
+          <div style="position: absolute; opacity: 0; width: 0.1px; height: 0.1px; overflow: hidden; z-index: -1;">
+            {{ form.work_image }}
+          </div>
+        </div>
+
+        <!-- Section B: Live Camera Capture Section (Mandatory for Off-Site; Optional for On-Site) -->
+        <div id="liveCameraContainer" style="display: none; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 14px; background: #f8fafc;">
+          <!-- Camera Viewfinder Box -->
+          <div id="cameraViewfinderBox" style="display: none; position: relative; border-radius: 10px; overflow: hidden; background: #000; margin-bottom: 12px; text-align: center;">
+            <video id="cameraVideo" autoplay playsinline style="width: 100%; max-height: 250px; object-fit: cover; display: block;"></video>
+            <div style="position: absolute; bottom: 8px; left: 0; right: 0; text-align: center;">
+              <button type="button" id="btnSnapLivePhoto" onclick="captureLivePhoto()" class="btn btn-danger btn-sm" style="font-weight: 700; padding: 6px 18px; border-radius: 20px; box-shadow: 0 4px 12px rgba(225,29,72,0.4);">
+                📸 Capture Photo
+              </button>
+            </div>
+          </div>
+
+          <!-- Captured Photo Result Preview -->
+          <div id="cameraPreviewResultBox" style="display: none; position: relative; border-radius: 10px; overflow: hidden; margin-bottom: 12px; border: 2px solid #86efac; text-align: center;">
+            <img id="cameraCapturedImg" src="" alt="Captured Photo" style="width: 100%; max-height: 250px; object-fit: cover; display: block;">
+            <div style="position: absolute; bottom: 8px; left: 0; right: 0; text-align: center;">
+              <button type="button" onclick="retakeLivePhoto()" class="btn btn-warning btn-sm" style="font-weight: 700; padding: 5px 14px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                🔄 Retake Photo
+              </button>
+            </div>
+          </div>
+
+          <!-- Camera Trigger Controls -->
+          <div id="cameraTriggerControls" style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+            <button type="button" id="btnStartCamera" onclick="startCameraStream()" class="btn btn-primary btn-sm" style="font-weight: 700; padding: 8px 16px; border-radius: 10px; display: flex; align-items: center; gap: 6px;">
+              <span>📹 Open Live Camera</span>
+            </button>
+            <!-- Mobile Camera Direct Capture Fallback -->
+            <label for="cameraMobileInput" class="btn btn-outline btn-sm" style="font-weight: 700; padding: 8px 16px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px; border-color: #0284c7; color: #0284c7;">
+              <span>📱 Open Device Camera</span>
+            </label>
+            <input type="file" id="cameraMobileInput" name="camera_photo_file" accept="image/*" capture="environment" style="display: none;">
+          </div>
+
+          <!-- Hidden Base64 Camera Data Field -->
+          <input type="hidden" name="camera_photo_data" id="cameraPhotoData" value="">
+          <!-- Canvas for capturing stream frame -->
+          <canvas id="cameraCanvas" style="display: none;"></canvas>
+        </div>
+
+        <!-- Selected File Status Box -->
+        <div id="fileSelectedBox" style="display: none; margin-top: 12px; padding: 12px 16px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+            <img id="workImagePreview" class="work-image-preview-box" alt="Preview" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid #bbf7d0; flex-shrink: 0; display: none;">
+            <div style="min-width: 0;">
+              <div id="selectedFileName" style="font-size: 13.5px; font-weight: 700; color: #166534; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></div>
+              <div id="selectedFileSize" style="font-size: 11.5px; color: #15803d;"></div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-danger btn-sm" id="btnRemoveFile" style="padding: 4px 10px; font-size: 11px; border-radius: 6px; flex-shrink: 0;" title="Remove this photo">
+            ✕ Remove
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Buttons Row -->
+      <div style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+        <button type="reset" class="btn btn-outline" style="border-radius: 10px; padding: 10px 18px; font-weight: 600;" onclick="resetWorkForm()">
+          Reset
+        </button>
+        <button type="submit" class="btn-purple-action" style="padding: 10px 22px; font-weight: 700; border-radius: 10px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          <span>Submit Work Report</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Right Column: Recent Task Progress Feeds -->
+  <div class="modern-surface-card" style="box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-radius: 18px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+      <div>
+        <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">Recent Task Progress Feeds</h3>
+        <p style="font-size: 13px; color: #64748b; margin: 0;">Verified task updates with location audit &amp; photo proof</p>
+      </div>
+      <span class="badge badge-primary" id="feedCountBadge" style="border-radius: 8px; font-weight: 700;">{{ works|length }} Total</span>
+    </div>
+
+    <!-- Feed Filter Tabs: All, On-Site, Off-Site -->
+    <div style="display: flex; gap: 8px; margin-bottom: 16px; background: #f1f5f9; padding: 4px; border-radius: 10px;">
+      <button type="button" class="btn btn-sm feed-filter-btn" id="filterAll" onclick="filterFeedsByMode('all', this)" style="flex: 1; border-radius: 8px; font-weight: 700; font-size: 12px; padding: 6px 10px; background: #ffffff; color: #0f172a; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        All Feeds
+      </button>
+      <button type="button" class="btn btn-sm feed-filter-btn" id="filterOnsite" onclick="filterFeedsByMode('onsite', this)" style="flex: 1; border-radius: 8px; font-weight: 600; font-size: 12px; padding: 6px 10px; background: transparent; color: #64748b; border: none;">
+        🏢 On-Site
+      </button>
+      <button type="button" class="btn btn-sm feed-filter-btn" id="filterOffsite" onclick="filterFeedsByMode('offsite', this)" style="flex: 1; border-radius: 8px; font-weight: 600; font-size: 12px; padding: 6px 10px; background: transparent; color: #64748b; border: none;">
+        📍 Off-Site
+      </button>
+    </div>
+
+    <div style="max-height: 620px; overflow-y: auto; padding-right: 4px;" id="feedsContainer">
+      {% for w in works %}
+      <div class="work-feed-item" data-mode="{% if w.is_offsite %}offsite{% else %}onsite{% endif %}" style="padding: 16px; background: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0; border-left: 4px solid {% if w.is_offsite %}#7c3aed{% else %}#0284c7{% endif %}; margin-bottom: 14px; transition: all 0.2s ease;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0;">{{ w.project_name }}</h4>
+              {% if w.is_offsite %}
+              <span class="badge" style="background: #f3e8ff; color: #6b21a8; font-size: 11px; border-radius: 6px; font-weight: 700;">
+                📍 Off-Site Activity
+              </span>
+              {% else %}
+              <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 11px; border-radius: 6px; font-weight: 700;">
+                🏢 On-Site Office
+              </span>
+              {% endif %}
+            </div>
+            <div style="font-size: 12px; color: #64748b; margin-top: 3px;">
+              <b>{{ w.employee.employee_code }}</b> ({{ w.employee.display_name }}) • {{ w.date|date:"M d, Y" }}
+            </div>
+            {% if w.location_notes %}
+            <div style="margin-top: 4px; font-size: 12px; color: #334155; display: flex; align-items: center; gap: 4px;">
+              <span style="color: #64748b;">📍 Location:</span>
+              <span style="font-weight: 600;">{{ w.location_notes }}</span>
+            </div>
+            {% endif %}
+          </div>
+          <span class="badge {% if w.status == 'Completed' %}badge-success{% elif w.status == 'In Progress' %}badge-primary{% else %}badge-warning{% endif %}" style="border-radius: 6px; font-weight: 600;">
+            {{ w.status }}
+          </span>
+        </div>
+        <p style="font-size: 13.5px; color: #334155; line-height: 1.5; margin: 8px 0 0 0;">
+          {{ w.work_details }}
+        </p>
+
+        {% if w.work_image %}
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1; display: flex; align-items: center; gap: 12px;">
+          <img src="{{ w.work_image.url }}" alt="Activity Proof" class="work-thumb" onclick="openWorkImageModal('{{ w.work_image.url }}')" title="Click to view full photo" style="width: 56px; height: 56px; object-fit: cover; border-radius: 8px; border: 2px solid #e2e8f0; cursor: pointer; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.08);">
+          <div style="font-size: 12px; color: #475569;">
+            <div style="font-weight: 700; color: #1e293b; margin-bottom: 2px;">
+              {% if w.is_offsite %}📷 Verified Live Camera Photo{% else %}📷 Activity Screenshot / Photo{% endif %}
+            </div>
+            <a href="javascript:void(0)" onclick="openWorkImageModal('{{ w.work_image.url }}')" style="color: #4f46e5; font-weight: 600; text-decoration: underline; margin-right: 8px;">View Full Image</a>
+            • <a href="{{ w.work_image.url }}" target="_blank" style="color: #64748b;">Open Original ↗</a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div style="text-align: center; color: #94a3b8; padding: 48px 20px;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+        <div>No daily work logs recorded yet.</div>
+      </div>
+      {% endfor %}
+      <div id="noFeedsFilteredMsg" style="display: none; text-align: center; color: #94a3b8; padding: 36px 20px;">
+        No work feeds found for this mode.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Full-Width Card: My Assigned Daily Work Plans -->
+<div class="modern-surface-card" style="margin-top: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-radius: 18px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
+    <div>
+      <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">My Assigned Daily Work Plans</h3>
+      <p style="font-size: 13px; color: #64748b; margin: 0;">Plans and responsibilities assigned directly by HR management</p>
+    </div>
+    <span class="badge badge-primary" style="border-radius: 8px;">{{ my_work_plans|length }} Planned Task(s)</span>
+  </div>
+
+  <div class="table-responsive" style="border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;">
+    <table class="data-table" style="margin: 0;">
+      <thead>
+        <tr style="background: #f8fafc;">
+          <th>Work Date</th>
+          <th>Plan Title</th>
+          <th>Tasks &amp; Responsibilities</th>
+          <th>Assigned By</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for plan in my_work_plans %}
+        <tr>
+          <td style="white-space: nowrap;">
+            <b>{{ plan.work_date|date:"M d, Y (D)" }}</b>
+            {% if plan.work_date == today %}
+            <span class="badge badge-success" style="font-size: 10px; margin-left: 4px; border-radius: 4px;">Today</span>
+            {% endif %}
+          </td>
+          <td><b>{{ plan.title }}</b></td>
+          <td style="white-space: pre-wrap; font-size: 13px; line-height: 1.4; max-width: 420px;">{{ plan.tasks }}</td>
+          <td>{{ plan.assigned_by.get_full_name|default:plan.assigned_by.username|default:"HR Department" }}</td>
+          <td>
+            <span class="badge {% if plan.status == 'Completed' %}badge-success{% elif plan.status == 'In Progress' %}badge-primary{% elif plan.status == 'Deferred' %}badge-warning{% else %}badge-info{% endif %}" style="border-radius: 6px; font-weight: 600;">
+              {{ plan.status }}
+            </span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" style="text-align: center; color: #94a3b8; padding: 32px 20px;">
+            No daily work plans assigned yet. Check back when HR assigns your next tasks!
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Image Lightbox Modal -->
+<div class="modal-overlay" id="workImageModal" onclick="closeWorkImageModal()">
+  <div class="modal-card" style="max-width: 760px; background: transparent; box-shadow: none; border: none; text-align: center;" onclick="event.stopPropagation()">
+    <img id="workModalImg" src="" alt="Work Photo" style="max-width: 100%; max-height: 82vh; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+    <div style="margin-top: 14px;">
+      <button type="button" class="btn btn-outline" style="color: #fff; border-color: rgba(255,255,255,0.4); border-radius: 8px;" onclick="closeWorkImageModal()">Close Preview</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Elements
+  const isOffsiteCheckbox = document.getElementById('isOffsiteCheckbox') || document.getElementById('id_is_offsite');
+  const btnModeOnsite = document.getElementById('btnModeOnsite');
+  const btnModeOffsite = document.getElementById('btnModeOffsite');
+  const activeModeBadge = document.getElementById('activeModeBadge');
+  const locationInput = document.getElementById('locationNotesInput') || document.getElementById('id_location_notes');
+  const locationHelpText = document.getElementById('locationHelpText');
+  const gpsStatusBadge = document.getElementById('gpsStatusBadge');
+
+  const onsitePhotoTabs = document.getElementById('onsitePhotoTabs');
+  const offsiteCameraNotice = document.getElementById('offsiteCameraNotice');
+  const fileUploadContainer = document.getElementById('fileUploadContainer');
+  const liveCameraContainer = document.getElementById('liveCameraContainer');
+  const photoModeTag = document.getElementById('photoModeTag');
+
+  const workImgInput = document.getElementById('workImageInput') || document.getElementById('id_work_image');
+  const workImgPreview = document.getElementById('workImagePreview');
+  const fileSelectedBox = document.getElementById('fileSelectedBox');
+  const selectedFileName = document.getElementById('selectedFileName');
+  const selectedFileSize = document.getElementById('selectedFileSize');
+  const btnRemoveFile = document.getElementById('btnRemoveFile');
+  const dropZone = document.getElementById('dropZoneContainer');
+
+  // Camera elements
+  let mediaStream = null;
+  const cameraVideo = document.getElementById('cameraVideo');
+  const cameraViewfinderBox = document.getElementById('cameraViewfinderBox');
+  const cameraPreviewResultBox = document.getElementById('cameraPreviewResultBox');
+  const cameraCapturedImg = document.getElementById('cameraCapturedImg');
+  const cameraTriggerControls = document.getElementById('cameraTriggerControls');
+  const cameraPhotoData = document.getElementById('cameraPhotoData');
+  const cameraCanvas = document.getElementById('cameraCanvas');
+  const cameraMobileInput = document.getElementById('cameraMobileInput');
+
+  const DEFAULT_ONSITE_LOCATION = "Netcom Head Office / On-Site Premises";
+
+  // 1. Work Mode Selector (On-Site vs Off-Site)
+  function selectWorkMode(isOffsite) {
+    if (isOffsiteCheckbox) {
+      isOffsiteCheckbox.checked = isOffsite;
+    }
+
+    if (isOffsite) {
+      // Off-Site Mode styling
+      btnModeOffsite.style.borderColor = '#7c3aed';
+      btnModeOffsite.style.background = '#f3e8ff';
+      btnModeOffsite.style.color = '#6b21a8';
+
+      btnModeOnsite.style.borderColor = '#e2e8f0';
+      btnModeOnsite.style.background = '#f8fafc';
+      btnModeOnsite.style.color = '#64748b';
+
+      if (activeModeBadge) {
+        activeModeBadge.textContent = "📍 Off-Site Field";
+        activeModeBadge.style.background = '#f3e8ff';
+        activeModeBadge.style.color = '#6b21a8';
+      }
+
+      // Mandatory Location adjustments for Off-Site
+      if (locationInput) {
+        locationInput.setAttribute('required', 'required');
+        locationInput.placeholder = "Client Site Name, Branch Address, or Field GPS (Mandatory)";
+        if (locationInput.value === DEFAULT_ONSITE_LOCATION) {
+          locationInput.value = '';
+        }
+      }
+      if (locationHelpText) {
+        locationHelpText.textContent = "Off-site location is strictly mandatory. Enter client site or click Detect GPS.";
+        locationHelpText.style.color = '#e11d48';
+      }
+
+      // Photo Restrictions: STRICT CAMERA-ONLY
+      if (onsitePhotoTabs) onsitePhotoTabs.style.display = 'none';
+      if (offsiteCameraNotice) offsiteCameraNotice.style.display = 'block';
+      if (fileUploadContainer) fileUploadContainer.style.display = 'none';
+      if (liveCameraContainer) liveCameraContainer.style.display = 'block';
+      if (photoModeTag) {
+        photoModeTag.textContent = "Strict Camera-Only Mode";
+        photoModeTag.style.color = '#e11d48';
+      }
+
+      // Clear standard file upload
+      if (workImgInput) workImgInput.value = '';
+
+    } else {
+      // On-Site Mode styling
+      btnModeOnsite.style.borderColor = '#0284c7';
+      btnModeOnsite.style.background = '#f0f9ff';
+      btnModeOnsite.style.color = '#0369a1';
+
+      btnModeOffsite.style.borderColor = '#e2e8f0';
+      btnModeOffsite.style.background = '#f8fafc';
+      btnModeOffsite.style.color = '#64748b';
+
+      if (activeModeBadge) {
+        activeModeBadge.textContent = "🏢 On-Site Office";
+        activeModeBadge.style.background = '#e0f2fe';
+        activeModeBadge.style.color = '#0369a1';
+      }
+
+      // Mandatory Location adjustments for On-Site
+      if (locationInput) {
+        locationInput.setAttribute('required', 'required');
+        locationInput.placeholder = "Office Branch / Desk / Premises (Mandatory)";
+        if (!locationInput.value || locationInput.value.trim() === '') {
+          locationInput.value = DEFAULT_ONSITE_LOCATION;
+        }
+      }
+      if (locationHelpText) {
+        locationHelpText.textContent = "Office location is prefilled. Specify branch, floor, or desk if applicable.";
+        locationHelpText.style.color = '#64748b';
+      }
+
+      // Photo: Camera OR File Upload Allowed
+      if (onsitePhotoTabs) onsitePhotoTabs.style.display = 'flex';
+      if (offsiteCameraNotice) offsiteCameraNotice.style.display = 'none';
+      if (photoModeTag) {
+        photoModeTag.textContent = "Camera or File Upload Allowed";
+        photoModeTag.style.color = '#0284c7';
+      }
+      switchPhotoInputMode('file');
+    }
+  }
+
+  // Switch between File and Camera in On-Site Mode
+  function switchPhotoInputMode(mode) {
+    const tabFile = document.getElementById('tabUploadFile');
+    const tabCamera = document.getElementById('tabSnapCamera');
+
+    if (mode === 'camera') {
+      if (tabCamera) {
+        tabCamera.style.background = '#e0f2fe';
+        tabCamera.style.color = '#0369a1';
+        tabCamera.style.borderColor = '#0284c7';
+      }
+      if (tabFile) {
+        tabFile.style.background = '#f8fafc';
+        tabFile.style.color = '#64748b';
+        tabFile.style.borderColor = '#cbd5e1';
+      }
+      if (fileUploadContainer) fileUploadContainer.style.display = 'none';
+      if (liveCameraContainer) liveCameraContainer.style.display = 'block';
+    } else {
+      if (tabFile) {
+        tabFile.style.background = '#e0f2fe';
+        tabFile.style.color = '#0369a1';
+        tabFile.style.borderColor = '#0284c7';
+      }
+      if (tabCamera) {
+        tabCamera.style.background = '#f8fafc';
+        tabCamera.style.color = '#64748b';
+        tabCamera.style.borderColor = '#cbd5e1';
+      }
+      if (fileUploadContainer) fileUploadContainer.style.display = 'block';
+      if (liveCameraContainer) liveCameraContainer.style.display = 'none';
+      stopCameraStream();
+    }
+  }
+
+  // 2. GPS Location Detection
+  function detectCurrentLocation() {
+    const btn = document.getElementById('btnDetectGps');
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    if (btn) btn.innerHTML = "<span>⏳ Locating...</span>";
+
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        const lat = position.coords.latitude.toFixed(6);
+        const lon = position.coords.longitude.toFixed(6);
+        const isOff = isOffsiteCheckbox && isOffsiteCheckbox.checked;
+        const tag = isOff ? "Off-Site Field Visit" : "Office Premises";
+
+        if (locationInput) {
+          locationInput.value = `GPS: ${lat}, ${lon} (${tag})`;
+        }
+        if (gpsStatusBadge) gpsStatusBadge.style.display = 'inline';
+        if (btn) btn.innerHTML = "<span>✅ GPS Detected</span>";
+      },
+      function(err) {
+        alert("GPS location access was not granted or failed. Please enter the location manually.");
+        if (btn) btn.innerHTML = "<span>📍 Detect GPS</span>";
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  }
+
+  // 3. Live WebRTC Camera Stream Handling
+  async function startCameraStream() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Live camera is not supported on this browser. Please use the 'Open Device Camera' option.");
+      return;
+    }
+
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+      if (cameraVideo) {
+        cameraVideo.srcObject = mediaStream;
+        cameraVideo.play();
+      }
+      if (cameraViewfinderBox) cameraViewfinderBox.style.display = 'block';
+      if (cameraPreviewResultBox) cameraPreviewResultBox.style.display = 'none';
+      if (cameraTriggerControls) cameraTriggerControls.style.display = 'none';
+    } catch (err) {
+      alert("Could not access camera: " + err.message + ". Please click 'Open Device Camera' to capture directly.");
+    }
+  }
+
+  function stopCameraStream() {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      mediaStream = null;
+    }
+    if (cameraVideo) cameraVideo.srcObject = null;
+    if (cameraViewfinderBox) cameraViewfinderBox.style.display = 'none';
+    if (cameraTriggerControls) cameraTriggerControls.style.display = 'flex';
+  }
+
+  function captureLivePhoto() {
+    if (!cameraVideo || !cameraCanvas) return;
+    const width = cameraVideo.videoWidth || 640;
+    const height = cameraVideo.videoHeight || 480;
+    cameraCanvas.width = width;
+    cameraCanvas.height = height;
+    const ctx = cameraCanvas.getContext('2d');
+    ctx.drawImage(cameraVideo, 0, 0, width, height);
+
+    const dataUrl = cameraCanvas.toDataURL('image/jpeg', 0.85);
+    if (cameraPhotoData) cameraPhotoData.value = dataUrl;
+
+    if (cameraCapturedImg) cameraCapturedImg.src = dataUrl;
+    if (cameraPreviewResultBox) cameraPreviewResultBox.style.display = 'block';
+    if (cameraViewfinderBox) cameraViewfinderBox.style.display = 'none';
+
+    stopCameraStream();
+
+    // Display confirmation in status card
+    if (selectedFileName) selectedFileName.textContent = "Live Camera Photo Captured";
+    if (selectedFileSize) selectedFileSize.textContent = "Live camera verification ready for submission ✅";
+    if (fileSelectedBox) fileSelectedBox.style.display = 'flex';
+    if (workImgPreview) {
+      workImgPreview.src = dataUrl;
+      workImgPreview.style.display = 'block';
+    }
+  }
+
+  function retakeLivePhoto() {
+    if (cameraPhotoData) cameraPhotoData.value = '';
+    if (cameraPreviewResultBox) cameraPreviewResultBox.style.display = 'none';
+    if (fileSelectedBox) fileSelectedBox.style.display = 'none';
+    startCameraStream();
+  }
+
+  // Mobile camera input handling
+  if (cameraMobileInput) {
+    cameraMobileInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const file = this.files[0];
+        handleFileSelected(file);
+        if (selectedFileName) selectedFileName.textContent = `Camera Photo: ${file.name}`;
+      }
+    });
+  }
+
+  // 4. File Upload Drag & Drop Handling
+  function handleFileSelected(file) {
+    if (!file) {
+      clearFileSelection();
+      return;
+    }
+
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
+    const fileName = file.name.toLowerCase();
+    const isValidExt = validExtensions.some(ext => fileName.endsWith(ext));
+    if (!isValidExt) {
+      alert("Unsupported file format! Please select an image file (PNG, JPG, JPEG, WEBP, GIF, BMP).");
+      clearFileSelection();
+      return;
+    }
+
+    const maxBytes = 10 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      alert("File size exceeds 10MB limit! Selected file is " + (file.size / (1024 * 1024)).toFixed(1) + "MB. Please choose a smaller image.");
+      clearFileSelection();
+      return;
+    }
+
+    if (selectedFileName) selectedFileName.textContent = file.name;
+    if (selectedFileSize) selectedFileSize.textContent = (file.size / (1024 * 1024)).toFixed(2) + " MB • Image Ready for Upload";
+    if (fileSelectedBox) fileSelectedBox.style.display = 'flex';
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      if (workImgPreview) {
+        workImgPreview.src = e.target.result;
+        workImgPreview.style.display = 'block';
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearFileSelection() {
+    if (workImgInput) workImgInput.value = '';
+    if (cameraMobileInput) cameraMobileInput.value = '';
+    if (cameraPhotoData) cameraPhotoData.value = '';
+    if (fileSelectedBox) fileSelectedBox.style.display = 'none';
+    if (workImgPreview) {
+      workImgPreview.src = '';
+      workImgPreview.style.display = 'none';
+    }
+    if (cameraPreviewResultBox) cameraPreviewResultBox.style.display = 'none';
+  }
+
+  if (workImgInput) {
+    workImgInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        handleFileSelected(this.files[0]);
+      } else {
+        clearFileSelection();
+      }
+    });
+  }
+
+  if (btnRemoveFile) {
+    btnRemoveFile.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      clearFileSelection();
+    });
+  }
+
+  // Drag & drop
+  if (dropZone && workImgInput) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#0284c7';
+        dropZone.style.background = '#e0f2fe';
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#cbd5e1';
+        dropZone.style.background = '#f8fafc';
+      }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      if (files && files.length) {
+        workImgInput.files = files;
+        handleFileSelected(files[0]);
+      }
+    }, false);
+  }
+
+  // 5. Client-Side Feed Filter (All, On-Site, Off-Site)
+  function filterFeedsByMode(mode, activeBtn) {
+    const buttons = document.querySelectorAll('.feed-filter-btn');
+    buttons.forEach(b => {
+      b.style.background = 'transparent';
+      b.style.color = '#64748b';
+      b.style.boxShadow = 'none';
+      b.style.fontWeight = '600';
+    });
+
+    if (activeBtn) {
+      activeBtn.style.background = '#ffffff';
+      activeBtn.style.color = '#0f172a';
+      activeBtn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+      activeBtn.style.fontWeight = '700';
+    }
+
+    const items = document.querySelectorAll('.work-feed-item');
+    let visibleCount = 0;
+    items.forEach(item => {
+      const itemMode = item.getAttribute('data-mode');
+      if (mode === 'all' || itemMode === mode) {
+        item.style.display = 'block';
+        visibleCount++;
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    const noMsg = document.getElementById('noFeedsFilteredMsg');
+    if (noMsg) {
+      noMsg.style.display = (visibleCount === 0 && items.length > 0) ? 'block' : 'none';
+    }
+
+    const badge = document.getElementById('feedCountBadge');
+    if (badge) {
+      const label = mode === 'all' ? 'Total' : (mode === 'onsite' ? 'On-Site' : 'Off-Site');
+      badge.textContent = `${visibleCount} ${label}`;
+    }
+  }
+
+  function resetWorkForm() {
+    stopCameraStream();
+    clearFileSelection();
+    selectWorkMode(false);
+  }
+
+  // Lightbox Modal
+  function openWorkImageModal(url) {
+    document.getElementById('workModalImg').src = url;
+    document.getElementById('workImageModal').classList.add('active');
+  }
+
+  function closeWorkImageModal() {
+    document.getElementById('workImageModal').classList.remove('active');
+  }
+
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', function() {
+    const initialOffsite = isOffsiteCheckbox && isOffsiteCheckbox.checked;
+    selectWorkMode(initialOffsite);
+  });
+</script>
+{% endblock %}

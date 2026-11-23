@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block page_title %}Office Branches & 100m Geofencing{% endblock %}
+
+{% block content %}
+<!-- Modern Hero Banner (Admin Only) -->
+<div class="employee-hero-banner hero-banner-dashboard-container" style="position: relative; margin-bottom: 24px; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 22px rgba(0, 0, 0, 0.04); border: 1.5px solid #edf2f7; background: #e0f2fe url('{% static 'images/banners/daily_works_bg.png' %}') no-repeat right center; background-size: cover; min-height: 180px; width: 100%; padding: 26px 32px; display: flex; align-items: center; justify-content: space-between;">
+  <div class="hero-left-content" style="z-index: 2; max-width: 620px;">
+    <div style="font-size: 13.5px; font-weight: 700; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+      🛡️ Administrator Security Control
+    </div>
+    <h1 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.5px; line-height: 1.2;">
+      Office Branches &amp; 100m Geofencing
+    </h1>
+    <p style="font-size: 14px; color: #475569; margin: 0; line-height: 1.5;">
+      Configure official office branch GPS coordinates and strict 100-meter geofence boundaries. On-site staff can strictly Punch In and Punch Out only within this radius.
+    </p>
+  </div>
+  
+  <div style="z-index: 2; display: flex; gap: 10px;">
+    <a href="{% url 'users:verify_admin_access' %}" class="btn btn-outline" style="background: rgba(255,255,255,0.9); font-weight: 700; border-radius: 12px; font-size: 13px; padding: 10px 16px; border-color: #cbd5e1; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+      <span>⚙️ Django Admin Panel</span>
+    </a>
+  </div>
+</div>
+
+<div class="metrics-grid" style="margin-bottom: 24px;">
+  <div class="metric-card">
+    <div class="metric-info">
+      <h4>Total Branches</h4>
+      <div class="metric-value">{{ total_branches }}</div>
+    </div>
+    <div class="metric-icon-box icon-blue">🏢</div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-info">
+      <h4>Active Geofences</h4>
+      <div class="metric-value" style="color: var(--success);">{{ active_branches_count }}</div>
+    </div>
+    <div class="metric-icon-box icon-green">📍</div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-info">
+      <h4>Standard Boundary</h4>
+      <div class="metric-value" style="color: #0284c7;">100m</div>
+    </div>
+    <div class="metric-icon-box icon-purple">🎯</div>
+  </div>
+</div>
+
+<div class="grid-2" style="align-items: start; gap: 24px;">
+  <!-- Left Column: Add / Configure New Branch -->
+  <div class="modern-surface-card" style="box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-radius: 18px;">
+    <div style="margin-bottom: 20px;">
+      <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">Configure Office Branch &amp; Geofence</h3>
+      <p style="font-size: 13px; color: #64748b; margin: 0;">Set exact latitude, longitude, and geofence radius</p>
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_branch">
+
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+          Branch / Office Name <span style="color: #e11d48;">*</span>
+        </label>
+        {{ branch_form.name }}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+          Branch Code <span style="color: #e11d48;">*</span>
+        </label>
+        {{ branch_form.code }}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+          Office Address
+        </label>
+        {{ branch_form.address }}
+      </div>
+
+      <!-- GPS Coordinates Row with Auto-Detect Button -->
+      <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <label style="font-weight: 700; color: #166534; font-size: 13px; margin: 0;">
+            📍 Exact GPS Coordinates <span style="color: #e11d48;">*</span>
+          </label>
+          <button type="button" id="btnDetectBranchGps" onclick="detectAdminBranchLocation()" class="btn btn-sm btn-outline" style="background: #ffffff; color: #15803d; border-color: #86efac; font-weight: 700; padding: 4px 10px; font-size: 11.5px; border-radius: 8px;">
+            <span>📍 Capture My Current GPS</span>
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group" style="margin: 0;">
+            <label style="font-size: 11.5px; font-weight: 600; color: #14532d; margin-bottom: 4px; display: block;">Latitude</label>
+            {{ branch_form.latitude }}
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label style="font-size: 11.5px; font-weight: 600; color: #14532d; margin-bottom: 4px; display: block;">Longitude</label>
+            {{ branch_form.longitude }}
+          </div>
+        </div>
+        <small id="gpsNotice" style="display: block; font-size: 11px; color: #15803d; margin-top: 6px;">
+          Click "Capture My Current GPS" if you are currently at this branch office.
+        </small>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
+        <div class="form-group" style="margin: 0;">
+          <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+            Geofence Radius (Meters) <span style="color: #e11d48;">*</span>
+          </label>
+          {{ branch_form.radius_meters }}
+          <small style="font-size: 11px; color: #64748b; margin-top: 2px; display: block;">Default: 100 meters</small>
+        </div>
+        <div class="form-group" style="margin: 0; display: flex; flex-direction: column; justify-content: center;">
+          <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+            Active Status
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+            {{ branch_form.is_active }}
+            <span style="font-size: 13px; color: #334155; font-weight: 600;">Enable Geofence</span>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 10px; font-weight: 700; padding: 11px 18px;">
+        ➕ Create Office Branch
+      </button>
+    </form>
+  </div>
+
+  <!-- Right Column: Registered Office Branches -->
+  <div class="modern-surface-card" style="box-shadow: 0 4px 20px rgba(0,0,0,0.05); border-radius: 18px;">
+    <div style="margin-bottom: 20px;">
+      <h3 style="font-size: 18px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">Official Office Branches</h3>
+      <p style="font-size: 13px; color: #64748b; margin: 0;">Current active geofence boundaries for staff attendance</p>
+    </div>
+
+    <div class="table-responsive" style="border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden;">
+      <table class="data-table" style="margin: 0;">
+        <thead>
+          <tr style="background: #f8fafc;">
+            <th>Branch / Office</th>
+            <th>GPS Coordinates</th>
+            <th>Radius</th>
+            <th>Staff</th>
+            <th>Status</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in branches %}
+          <tr>
+            <td>
+              <div style="font-weight: 700; color: #0f172a;">{{ b.name }}</div>
+              <div style="font-size: 11.5px; color: #64748b;">Code: <b>{{ b.code }}</b></div>
+              {% if b.address %}
+              <div style="font-size: 11px; color: #94a3b8; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                {{ b.address }}
+              </div>
+              {% endif %}
+            </td>
+            <td>
+              <div style="font-size: 12px; font-family: monospace; color: #1e293b;">
+                {{ b.latitude|floatformat:6 }},<br>{{ b.longitude|floatformat:6 }}
+              </div>
+              <a href="https://www.google.com/maps?q={{ b.latitude }},{{ b.longitude }}" target="_blank" style="font-size: 11px; color: #2563eb; text-decoration: underline;">
+                View on Map ↗
+              </a>
+            </td>
+            <td>
+              <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700; border-radius: 6px;">
+                🎯 {{ b.radius_meters }}m
+              </span>
+            </td>
+            <td>
+              <span style="font-weight: 700; color: #334155;">{{ b.employee_count }}</span>
+            </td>
+            <td>
+              {% if b.is_active %}
+              <span class="badge badge-success" style="border-radius: 6px;">Active</span>
+              {% else %}
+              <span class="badge badge-secondary" style="border-radius: 6px;">Inactive</span>
+              {% endif %}
+            </td>
+            <td style="text-align: right; white-space: nowrap;">
+              <a href="{% url 'departments:branch_edit' b.id %}" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11.5px; border-radius: 6px; margin-right: 4px;">
+                Edit
+              </a>
+              <form method="POST" action="{% url 'departments:branch_delete' b.id %}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete branch \'{{ b.name }}\'?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm" style="padding: 4px 10px; font-size: 11.5px; border-radius: 6px;">
+                  Delete
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" style="text-align: center; color: #94a3b8; padding: 32px 20px;">
+              No office branches configured yet. Add your first branch location above!
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function detectAdminBranchLocation() {
+    const btn = document.getElementById('btnDetectBranchGps');
+    const latInp = document.getElementById('branchLatitudeInput');
+    const lonInp = document.getElementById('branchLongitudeInput');
+    const notice = document.getElementById('gpsNotice');
+
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    if (btn) btn.innerHTML = "<span>⏳ Locating...</span>";
+
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        if (latInp) latInp.value = pos.coords.latitude.toFixed(6);
+        if (lonInp) lonInp.value = pos.coords.longitude.toFixed(6);
+        if (btn) btn.innerHTML = "<span>✅ GPS Captured</span>";
+        if (notice) notice.textContent = `Coordinates captured successfully (Accuracy: within ~${Math.round(pos.coords.accuracy)}m).`;
+      },
+      function(err) {
+        alert("GPS location access was not granted or failed. Please enter the coordinates manually.");
+        if (btn) btn.innerHTML = "<span>📍 Capture Current GPS</span>";
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  }
+</script>
+{% endblock %}

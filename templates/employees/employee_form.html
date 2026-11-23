@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+  <div class="panel">
+    <div class="panel-header">
+      <h3>{{ title }}</h3>
+      <a href="{% url 'employees:list' %}" class="btn btn-outline btn-sm">Cancel</a>
+    </div>
+    <div class="panel-body">
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          {% for field in form %}
+          <div class="form-group" style="{% if field.name == 'address' or field.name == 'document' or field.field.widget.input_type == 'checkbox' %}grid-column: span 2;{% endif %}">
+            {% if field.field.widget.input_type == 'checkbox' %}
+            <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+              <div style="padding-top: 2px;">{{ field }}</div>
+              <div>
+                <label for="{{ field.id_for_label }}" style="font-size: 13.5px; font-weight: 600; color: #1e293b; cursor: pointer; display: block; margin: 0;">{{ field.label }}</label>
+                {% if field.help_text %}<small style="color: #64748b; display: block; margin-top: 3px;">{{ field.help_text }}</small>{% endif %}
+              </div>
+            </div>
+            {% else %}
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }} {% if field.field.required %}<span style="color:var(--danger)">*</span>{% endif %}</label>
+            {{ field }}
+            {% if field.help_text %}<small style="color: var(--gray-600); display: block; margin-top: 4px;">{{ field.help_text }}</small>{% endif %}
+            {% endif %}
+            {% if field.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ field.errors.0 }}</div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        <div style="margin-top: 24px; display: flex; gap: 12px;">
+          <button type="submit" class="btn btn-primary" style="padding: 12px 24px;">Save Employee Record</button>
+          <a href="{% url 'employees:list' %}" class="btn btn-outline">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

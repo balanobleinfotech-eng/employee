@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block page_title %}Reports & Business Intelligence Hub{% endblock %}
+
+{% block content %}
+<!-- Modern Hero Banner with Background Banner -->
+<div class="employee-hero-banner hero-banner-dashboard-container" style="position: relative; margin-bottom: 24px; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 22px rgba(0, 0, 0, 0.04); border: 1.5px solid #edf2f7; background: #e0f2fe url('{% static 'images/banners/daily_works_bg.png' %}') no-repeat right center; background-size: cover; min-height: 185px; width: 100%; padding: 26px 32px; display: flex; align-items: center; justify-content: space-between;">
+  <div class="hero-left-content" style="z-index: 2; max-width: 620px;">
+    <div style="font-size: 14px; font-weight: 600; color: #0284c7; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Business Intelligence &amp; Analytics</div>
+    <h1 style="font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; letter-spacing: -0.5px; line-height: 1.2;">Reports &amp; Analytics Hub</h1>
+    <p style="font-size: 14px; color: #475569; margin: 0; line-height: 1.5;">Comprehensive employee data export with in/out times, GPS location audit, on-site/off-site daily work milestones, and verified photo proof in Excel &amp; PDF.</p>
+  </div>
+</div>
+
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="metric-info">
+      <h4>Attendance Records</h4>
+      <div class="metric-value">{{ total_records }}</div>
+    </div>
+    <div class="metric-icon-box icon-blue">⏱️</div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-info">
+      <h4>Leave Requests</h4>
+      <div class="metric-value">{{ total_leaves }}</div>
+    </div>
+    <div class="metric-icon-box icon-purple">📅</div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-info">
+      <h4>Payroll Vouchers</h4>
+      <div class="metric-value">{{ total_payroll }}</div>
+    </div>
+    <div class="metric-icon-box icon-green">💳</div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-info">
+      <h4>Active Staff</h4>
+      <div class="metric-value">{{ total_staff }}</div>
+    </div>
+    <div class="metric-icon-box icon-blue">👥</div>
+  </div>
+</div>
+
+<!-- Primary Card: Comprehensive Employee & Workforce Activity Export (Excel & PDF) -->
+<div class="modern-surface-card" style="margin-bottom: 24px; box-shadow: 0 4px 22px rgba(0,0,0,0.05); border-radius: 20px; border: 1.5px solid #e2e8f0; background: #ffffff; padding: 26px 28px;">
+  <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+        <span style="font-size: 20px;">📥</span>
+        <h3 style="font-size: 19px; font-weight: 800; color: #0f172a; margin: 0;">Comprehensive Employee &amp; Workforce Activity Export</h3>
+      </div>
+      <p style="font-size: 13.5px; color: #64748b; margin: 0;">
+        Download all employee data or a selected employee's in-time, out-time, GPS locations, and daily work updates in Excel (.xlsx) or PDF (.pdf).
+      </p>
+    </div>
+    <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700; border-radius: 8px; font-size: 12px; padding: 6px 12px;">
+      Excel (.xlsx) &amp; PDF (.pdf) Ready
+    </span>
+  </div>
+
+  <form method="GET" action="{% url 'reports:complete_export' %}" id="comprehensiveExportForm">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
+      <!-- Employee Scope: All or Particular Employee -->
+      <div class="form-group" style="margin: 0;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px; font-size: 13px;">
+          1. Select Employee Scope <span style="color: #e11d48;">*</span>
+        </label>
+        <select name="employee_id" class="form-select" style="font-weight: 600; border-radius: 10px;">
+          <option value="all" selected>🏢 All Employees (Company-Wide Workforce)</option>
+          <optgroup label="Particular Employees">
+            {% for emp in all_employees %}
+            <option value="{{ emp.id }}">
+              {{ emp.employee_code }} — {{ emp.display_name }} ({{ emp.department.name|default:"General" }})
+            </option>
+            {% endfor %}
+          </optgroup>
+        </select>
+        <small style="font-size: 11px; color: #64748b; margin-top: 3px; display: block;">
+          Choose "All Employees" for total workforce report, or pick a specific employee.
+        </small>
+      </div>
+
+      <!-- From Date -->
+      <div class="form-group" style="margin: 0;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px; font-size: 13px;">
+          2. From Date <span style="color: #e11d48;">*</span>
+        </label>
+        <input type="date" name="from_date" value="{{ from_date }}" class="form-input" style="border-radius: 10px;" required>
+        <small style="font-size: 11px; color: #64748b; margin-top: 3px; display: block;">Start date for audit records</small>
+      </div>
+
+      <!-- To Date -->
+      <div class="form-group" style="margin: 0;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px; font-size: 13px;">
+          3. To Date <span style="color: #e11d48;">*</span>
+        </label>
+        <input type="date" name="to_date" value="{{ today }}" class="form-input" style="border-radius: 10px;" required>
+        <small style="font-size: 11px; color: #64748b; margin-top: 3px; display: block;">End date for audit records</small>
+      </div>
+
+      <!-- Work Mode Filter (On-Site vs Off-Site) -->
+      <div class="form-group" style="margin: 0;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px; font-size: 13px;">
+          4. Work Mode Filter
+        </label>
+        <select name="work_mode" class="form-select" style="border-radius: 10px;">
+          <option value="all" selected>All Work (On-Site &amp; Off-Site)</option>
+          <option value="onsite">🏢 On-Site Office Work Only</option>
+          <option value="offsite">📍 Off-Site Field Work Only</option>
+        </select>
+        <small style="font-size: 11px; color: #64748b; margin-top: 3px; display: block;">Filter daily updates by work location</small>
+      </div>
+
+      <!-- Report Category -->
+      <div class="form-group" style="margin: 0;">
+        <label class="form-label" style="font-weight: 700; color: #1e293b; margin-bottom: 6px; font-size: 13px;">
+          5. Data Scope &amp; Category
+        </label>
+        <select name="category" class="form-select" style="border-radius: 10px;">
+          <option value="complete" selected>Complete Audit (In/Out, GPS, Daily Work, Leaves, Profiles)</option>
+          <option value="daily_work">Daily Work &amp; Task Accomplishments Only</option>
+          <option value="attendance">Attendance &amp; Punch Logs Only</option>
+          <option value="leaves">Leave Requests &amp; Balances</option>
+        </select>
+        <small style="font-size: 11px; color: #64748b; margin-top: 3px; display: block;">Included sheets and document sections</small>
+      </div>
+    </div>
+
+    <!-- Download Buttons Bar -->
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding-top: 18px; border-top: 1px solid #e2e8f0;">
+      <div style="font-size: 12.5px; color: #475569;">
+        ✨ <b>Included Data:</b> Punch In/Out, Total Duration, In/Out Location GPS, Attendance Status, Work Mode, Project, Daily Tasks, Status, Location Notes, &amp; Photo Proof.
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <!-- Download Excel Button -->
+        <button type="submit" name="format" value="excel" class="btn btn-success" style="font-weight: 700; padding: 10px 20px; border-radius: 10px; font-size: 13.5px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(22,163,74,0.25);">
+          <span>📊 Download Excel (.xlsx)</span>
+        </button>
+
+        <!-- Download PDF Button -->
+        <button type="submit" name="format" value="pdf" class="btn btn-primary" style="font-weight: 700; padding: 10px 20px; border-radius: 10px; font-size: 13.5px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">
+          <span>📄 Download PDF (.pdf)</span>
+        </button>
+
+        <!-- Download ZIP Bundle with Photos -->
+        <button type="submit" name="format" value="zip" class="btn btn-outline" style="font-weight: 600; padding: 10px 16px; border-radius: 10px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+          <span>📦 Download ZIP Bundle</span>
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="grid-2">
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Standard Report Queries</h3>
+    </div>
+    <div class="panel-body" style="display: flex; flex-direction: column; gap: 16px;">
+      <div style="padding: 16px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h4 style="margin: 0 0 4px 0;">Workforce Attendance Report</h4>
+          <p style="color: var(--gray-600); font-size: 13px; margin: 0;">Date range filter, employee filter, duration metrics, CSV download.</p>
+        </div>
+        <a href="{% url 'reports:attendance' %}" class="btn btn-primary btn-sm">Launch Report →</a>
+      </div>
+
+      <div style="padding: 16px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h4 style="margin: 0 0 4px 0;">Leave Analytics Report</h4>
+          <p style="color: var(--gray-600); font-size: 13px; margin: 0;">Annual leave volume, approval ratios, leave type distribution.</p>
+        </div>
+        <a href="{% url 'reports:leave' %}" class="btn btn-primary btn-sm">Launch Report →</a>
+      </div>
+
+      <div style="padding: 16px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h4 style="margin: 0 0 4px 0;">Compensation &amp; Payroll Audit</h4>
+          <p style="color: var(--gray-600); font-size: 13px; margin: 0;">Annual expenditure breakdown, monthly salary disbursements.</p>
+        </div>
+        <a href="{% url 'reports:payroll' %}" class="btn btn-primary btn-sm">Launch Report →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>Data Portability &amp; Format Details</h3>
+    </div>
+    <div class="panel-body">
+      <p style="font-size: 14px; line-height: 1.6; color: var(--gray-700); margin-bottom: 16px;">
+        All workforce records are generated live from the database with cryptographic integrity, audit timestamps, and operator identification for payroll verification and labor law compliance.
+      </p>
+      <div style="padding: 16px; background: #eff6ff; border-radius: var(--radius-sm); font-size: 13px; color: var(--primary); margin-bottom: 14px;">
+        <b>Excel Export:</b> Contains the unified <i>Daily Attendance &amp; Work Audit</i> sheet with all In/Out times, GPS locations, and daily work tasks paired by date, plus individual breakdown sheets.
+      </div>
+      <div style="padding: 16px; background: #f0fdf4; border-radius: var(--radius-sm); font-size: 13px; color: #166534;">
+        <b>PDF Dossier:</b> Formatted in high-resolution landscape layout with Netcom corporate branding, employee credentials, photo badges, and complete audit histories.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

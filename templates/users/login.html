@@ -1,0 +1,735 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  
+  <!-- SEO & Brand Identification: Highly Optimized for "NCPLI" & "NCPLI Employee" Google Rankings -->
+  <title>NCPLI Employee Portal | Netcom - Employee Management Portal</title>
+  <meta name="description" content="Official NCPLI Employee Management Portal by Netcom Computers Pvt Ltd. Secure employee login, daily attendance punch-in/out, work plans, leave management, and HR operations for NCPLI staff.">
+  <meta name="keywords" content="ncpli, ncpli employee, ncpli employees, ncpli login, ncpli portal, ncpli employee management, netcom computers, ncpli staff, netcom computers pvt ltd, netcom login">
+  <meta name="author" content="Netcom Computers Pvt Ltd - NCPLI">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="theme-color" content="#4338ca">
+
+  <!-- Open Graph / Facebook / WhatsApp (Social Media & Link Preview Optimization) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="NCPLI Employee Management System">
+  <meta property="og:title" content="NCPLI Employee Portal | Netcom Computers - Official Staff Login">
+  <meta property="og:description" content="Official NCPLI Employee Management Portal by Netcom Computers. Secure employee login, attendance tracking, daily milestones, and HR operations for NCPLI staff.">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'images/netcom_brand_logo.png' %}">
+  <meta property="og:image:alt" content="NCPLI - Netcom Computers Pvt Ltd Logo">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="NCPLI Employee Portal | Netcom Computers">
+  <meta name="twitter:description" content="Official NCPLI Employee Management System. Secure portal for NCPLI staff attendance and HR management.">
+  <meta name="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'images/netcom_brand_logo.png' %}">
+
+  <!-- Canonical URL & Icons -->
+  <link rel="canonical" href="{{ request.build_absolute_uri }}">
+  <link rel="icon" type="image/png" href="{% static 'images/netcom_logo.png' %}">
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+  <!-- Structured Data JSON-LD Schema (Google Knowledge Graph & Corporate Entity Association) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "{{ request.scheme }}://{{ request.get_host }}/#organization",
+        "name": "Netcom Computers Pvt Ltd",
+        "alternateName": ["NCPLI", "NCPLI Employee Portal", "Netcom NCPLI", "Netcom Computers"],
+        "url": "{{ request.scheme }}://{{ request.get_host }}/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "{{ request.scheme }}://{{ request.get_host }}{% static 'images/netcom_brand_logo.png' %}"
+        },
+        "description": "Official NCPLI Employee Management System and staff governance portal."
+      },
+      {
+        "@type": "WebSite",
+        "@id": "{{ request.scheme }}://{{ request.get_host }}/#website",
+        "url": "{{ request.scheme }}://{{ request.get_host }}/",
+        "name": "NCPLI Employee Portal",
+        "alternateName": ["NCPLI", "NCPLI Employees", "NCPLI Login"],
+        "publisher": { "@id": "{{ request.scheme }}://{{ request.get_host }}/#organization" },
+        "inLanguage": "en-US"
+      },
+      {
+        "@type": "WebPage",
+        "@id": "{{ request.build_absolute_uri }}#webpage",
+        "url": "{{ request.build_absolute_uri }}",
+        "name": "NCPLI Employee Portal - Official Login",
+        "isPartOf": { "@id": "{{ request.scheme }}://{{ request.get_host }}/#website" },
+        "about": { "@id": "{{ request.scheme }}://{{ request.get_host }}/#organization" },
+        "description": "Official NCPLI Employee Management Portal login page for staff attendance, daily reporting, and employee self-service."
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      background: #ffffff;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+    .login-viewport {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    /* ================= LEFT FORM PANEL ================= */
+    .login-left-panel {
+      flex: 1;
+      height: 100vh;
+      background: #ffffff;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 32px;
+      overflow-y: auto;
+    }
+
+    /* Top Left Dotted Matrix Pattern */
+    .login-dots-matrix {
+      position: absolute;
+      top: 36px;
+      left: 40px;
+      display: grid;
+      grid-template-columns: repeat(5, 7px);
+      grid-gap: 16px;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .login-dot {
+      width: 6.5px;
+      height: 6.5px;
+      background-color: #245743;
+      border-radius: 50%;
+      opacity: 0.85;
+    }
+
+    /* Centered Form Wrapper */
+    .login-form-box {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Netcom Brand Logo & Title */
+    .login-brand-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .login-brand-logo img {
+      height: 66px;
+      max-width: 100%;
+      width: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .ncpli-brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #4338ca;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      padding: 3px 12px;
+      border-radius: 20px;
+      margin-top: 8px;
+    }
+
+    /* Typography */
+    .login-title {
+      font-size: 30px;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 12px 0 4px 0;
+      letter-spacing: -0.6px;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .login-subtitle {
+      font-size: 13.5px;
+      color: #64748b;
+      margin: 0 0 24px 0;
+      text-align: center;
+    }
+
+    /* Input Fields */
+    .login-input-group {
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    .login-input-field {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14.5px;
+      color: #0f172a;
+      background: #ffffff;
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .login-input-field::placeholder {
+      color: #94a3b8;
+      font-weight: 400;
+    }
+    .login-input-field:focus {
+      border-color: #4338ca;
+      box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.12);
+    }
+    .password-field-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .password-visibility-btn {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      padding: 8px;
+      min-width: 40px;
+      min-height: 40px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      transition: color 0.15s ease;
+    }
+    .password-visibility-btn:hover {
+      color: #475569;
+    }
+
+    /* Remember Me Row */
+    .login-remember-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+    .remember-checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      color: #1e293b;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      min-height: 24px;
+    }
+    .remember-checkbox-input {
+      width: 18px;
+      height: 18px;
+      accent-color: #4338ca;
+      cursor: pointer;
+    }
+
+    /* Submit Button */
+    .btn-login-action {
+      width: 100%;
+      min-height: 48px;
+      padding: 13.5px;
+      background: #4338ca;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15.5px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(67, 56, 202, 0.35);
+      transition: all 0.2s ease;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-login-action:hover {
+      background: #3730a3;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(67, 56, 202, 0.42);
+    }
+    .btn-login-action:active {
+      transform: translateY(0);
+    }
+
+    /* Alerts */
+    .login-alert-box {
+      width: 100%;
+      margin-bottom: 18px;
+    }
+    .login-alert {
+      padding: 10px 14px;
+      font-size: 13px;
+      border-radius: 8px;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .login-alert-error, .login-alert-danger {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #f87171;
+    }
+    .login-alert-success {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+    }
+    .login-alert-info {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #7dd3fc;
+    }
+
+    /* SEO Brand Footer */
+    .login-seo-footer {
+      margin-top: 24px;
+      text-align: center;
+      padding-top: 14px;
+      border-top: 1px solid #f1f5f9;
+      width: 100%;
+    }
+    .login-seo-text {
+      margin: 0;
+      font-size: 11.5px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    /* ================= RIGHT ILLUSTRATION PANEL ================= */
+    .login-right-panel {
+      flex: 1;
+      height: 100vh;
+      background: linear-gradient(180deg, #4438ca 0%, #31289c 100%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 36px;
+    }
+    .login-illustration-card {
+      position: relative;
+      width: 100%;
+      max-width: 580px;
+      height: calc(100vh - 72px);
+      max-height: 840px;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+      background: #3e35b7;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      display: flex;
+    }
+    .login-hero-text-box {
+      position: absolute;
+      top: 48px;
+      left: 42px;
+      z-index: 5;
+      max-width: 250px;
+    }
+    .login-hero-heading {
+      color: #ffffff;
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -0.5px;
+      margin: 0;
+      font-family: inherit;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+    .login-woman-asset-wrap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      overflow: hidden;
+    }
+    .login-woman-asset {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 78% bottom;
+      display: block;
+      pointer-events: none;
+    }
+    .login-floating-badge {
+      position: absolute;
+      bottom: 28px;
+      left: 28px;
+      width: 58px;
+      height: 58px;
+      background: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.22);
+      z-index: 6;
+    }
+
+    /* ================= FULLY RESPONSIVE BREAKPOINTS ================= */
+    @media (max-width: 1100px) and (min-width: 901px) {
+      .login-left-panel {
+        padding: 30px 24px;
+      }
+      .login-right-panel {
+        padding: 24px;
+      }
+      .login-hero-heading {
+        font-size: 26px;
+      }
+    }
+
+    /* TABLETS & MOBILE PHONES (max-width: 900px) */
+    @media (max-width: 900px) {
+      html, body {
+        overflow-y: auto;
+        height: auto;
+        min-height: 100vh;
+      }
+      .login-viewport {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+        width: 100%;
+      }
+      .login-right-panel {
+        height: 220px;
+        padding: 14px;
+        order: -1;
+        flex: none;
+        width: 100%;
+      }
+      .login-illustration-card {
+        height: 100%;
+        max-height: 195px;
+        border-radius: 20px;
+      }
+      .login-hero-text-box {
+        top: 16px;
+        left: 20px;
+        max-width: 180px;
+      }
+      .login-hero-heading {
+        font-size: 19px;
+        line-height: 1.22;
+      }
+      .login-woman-asset {
+        object-position: 85% bottom;
+      }
+      .login-floating-badge {
+        bottom: 12px;
+        left: 14px;
+        width: 38px;
+        height: 38px;
+      }
+      .login-floating-badge svg {
+        width: 18px;
+        height: 18px;
+      }
+      .login-left-panel {
+        height: auto;
+        min-height: auto;
+        padding: 28px 20px 40px 20px;
+        flex: none;
+        width: 100%;
+      }
+      .login-dots-matrix {
+        display: none;
+      }
+      .login-title {
+        font-size: 26px;
+      }
+    }
+
+    /* SMALL PHONES (max-width: 480px) */
+    @media (max-width: 480px) {
+      .login-right-panel {
+        height: 165px;
+        padding: 10px;
+      }
+      .login-illustration-card {
+        max-height: 145px;
+        border-radius: 16px;
+      }
+      .login-hero-text-box {
+        top: 12px;
+        left: 14px;
+        max-width: 150px;
+      }
+      .login-hero-heading {
+        font-size: 15px;
+        line-height: 1.2;
+      }
+      .login-floating-badge {
+        display: none;
+      }
+      .login-left-panel {
+        padding: 20px 16px 36px 16px;
+      }
+      .login-form-box {
+        max-width: 100%;
+      }
+      .login-brand-logo img {
+        height: 50px;
+      }
+      .login-title {
+        font-size: 22px;
+      }
+      .login-subtitle {
+        font-size: 13px;
+        margin-bottom: 18px;
+      }
+      /* Prevent iOS Safari auto-zoom on input focus */
+      .login-input-field {
+        font-size: 16px;
+        padding: 12px 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-viewport login-split-card">
+    
+    <!-- LEFT PANEL: PURE HTML/CSS SIGN-IN FORM -->
+    <div class="login-left-panel">
+      <!-- Decorative Dotted Grid Pattern at Top Left -->
+      <div class="login-dots-matrix" aria-hidden="true">
+        <span class="login-dot"></span><span class="login-dot"></span><span class="login-dot"></span><span class="login-dot"></span><span class="login-dot"></span>
+        <span class="login-dot"></span><span class="login-dot"></span><span class="login-dot"></span><span class="login-dot"></span><span class="login-dot"></span>
+        <span class="login-dot"></span><span class="login-dot"></span><span class="login-dot"></span><span class="login-dot"></span><span class="login-dot"></span>
+        <span class="login-dot"></span><span class="login-dot"></span><span class="login-dot"></span><span class="login-dot"></span><span class="login-dot"></span>
+      </div>
+
+      <div class="login-form-box">
+        <!-- Netcom Brand Logo & Title with NCPLI Brand Entity Tag -->
+        <div class="login-brand-logo">
+          <img src="{% static 'images/netcom_brand_logo.png' %}" alt="Netcom Computers - NCPLI Employee Management">
+          <div class="ncpli-brand-badge">NCPLI &bull; Netcom Computers Pvt Ltd</div>
+        </div>
+
+        <h1 class="login-title">Welcome Back</h1>
+        <p class="login-subtitle">Please enter your details to sign in</p>
+
+        <!-- Django Flash Messages (Single-device session warning, logout, errors) -->
+        {% if messages %}
+        <div class="login-alert-box">
+          {% for message in messages %}
+          <div class="login-alert login-alert-{{ message.tags|default:'info' }}">
+            <span>{{ message }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Authentication Form Fully Integrated With Django Auth -->
+        <form method="POST" action="{% url 'login' %}" style="width: 100%;">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
+
+          <!-- Username Input -->
+          <div class="login-input-group">
+            <input type="text" 
+                   name="username" 
+                   id="id_username" 
+                   class="login-input-field" 
+                   placeholder="User Name" 
+                   required 
+                   autofocus 
+                   autocomplete="username">
+          </div>
+
+          <!-- Password Input with Toggle Visibility -->
+          <div class="login-input-group">
+            <div class="password-field-wrapper">
+              <input type="password" 
+                     name="password" 
+                     id="id_password" 
+                     class="login-input-field" 
+                     placeholder="Password" 
+                     required 
+                     autocomplete="current-password" 
+                     style="padding-right: 44px;">
+              <button type="button" 
+                      class="password-visibility-btn" 
+                      onclick="toggleLoginPassword()" 
+                      title="Toggle password visibility" 
+                      aria-label="Toggle password visibility">
+                <svg id="eyeIconSvg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Remember Me Checkbox -->
+          <div class="login-remember-row">
+            <label class="remember-checkbox-label">
+              <input type="checkbox" name="remember_me" class="remember-checkbox-input">
+              <span>Remember me</span>
+            </label>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn-login-action">
+            Login
+          </button>
+        </form>
+
+        {% if active_popup and active_popup.image %}
+        <div style="text-align: center; margin-top: 18px;">
+          <button type="button" onclick="openLoginPopup()" class="btn btn-outline btn-sm" style="font-size: 12px; border-color: #3b82f6; color: #2563eb;">
+            📢 View Netcom Corporate Notice
+          </button>
+        </div>
+        {% endif %}
+
+        <!-- SEO Crawlable Brand Footer -->
+        <div class="login-seo-footer">
+          <p class="login-seo-text">
+            <strong>NCPLI Employee Management System</strong> &bull; Netcom Computers Private Limited
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: HERO TEXT + LOCAL WOMAN IMAGE + BADGE -->
+    <div class="login-right-panel">
+      <div class="login-illustration-card">
+        <!-- Pure HTML Text Heading -->
+        <div class="login-hero-text-box">
+          <h2 class="login-hero-heading">
+            Very good<br>
+            works are<br>
+            waiting for<br>
+            you Login<br>
+            Now!!!
+          </h2>
+        </div>
+
+        <!-- Woman Image from Local File -->
+        <div class="login-woman-asset-wrap">
+          <img src="{% static 'images/login page women image.png' %}" alt="Staff member" class="login-woman-asset">
+        </div>
+
+        <!-- Floating Circular Badge with Lightning Bolt -->
+        <div class="login-floating-badge" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="#facc15" stroke="#ca8a04" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Corporate Notice Popup if Active -->
+  {% if active_popup and active_popup.image %}
+  <div class="announcement-popup-overlay" id="loginPopupModal">
+    <div class="announcement-popup-card" style="{% if active_popup.popup_width %}max-width: {{ active_popup.popup_width }}; width: 100%;{% endif %}">
+      <div class="announcement-popup-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 18px;">📢</span>
+          <h3 style="margin: 0; font-size: 16px; color: var(--dark); font-weight: 700;">{{ active_popup.title|default:"Netcom Announcement" }}</h3>
+        </div>
+        <button type="button" class="modal-close" onclick="closeLoginPopup()" title="Close">&times;</button>
+      </div>
+      <div class="announcement-popup-body">
+        <img src="{{ active_popup.image.url }}" alt="{{ active_popup.title }}" class="announcement-popup-img" style="{% if active_popup.popup_width %}max-width: 100%; width: {{ active_popup.popup_width }};{% endif %}{% if active_popup.popup_height and active_popup.popup_height != 'auto' %}max-height: {{ active_popup.popup_height }}; height: {{ active_popup.popup_height }}; object-fit: contain;{% endif %}">
+        {% if active_popup.description %}
+        <p style="margin-top: 14px; font-size: 13.5px; color: var(--gray-700); line-height: 1.5; text-align: left;">
+          {{ active_popup.description }}
+        </p>
+        {% endif %}
+      </div>
+      <div style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end;">
+        <button type="button" class="btn btn-primary btn-sm" onclick="closeLoginPopup()">
+          Proceed to Sign In
+        </button>
+      </div>
+    </div>
+  </div>
+  <script>
+    function closeLoginPopup() {
+      const m = document.getElementById('loginPopupModal');
+      if (m) m.classList.remove('active');
+    }
+    function openLoginPopup() {
+      const m = document.getElementById('loginPopupModal');
+      if (m) m.classList.add('active');
+    }
+  </script>
+  {% endif %}
+
+  <!-- Password Visibility Toggle Script -->
+  <script>
+    function toggleLoginPassword() {
+      const pwdInput = document.getElementById('id_password');
+      const eyeSvg = document.getElementById('eyeIconSvg');
+      if (!pwdInput) return;
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        if (eyeSvg) {
+          eyeSvg.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+        }
+      } else {
+        pwdInput.type = 'password';
+        if (eyeSvg) {
+          eyeSvg.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+        }
+      }
+    }
+  </script>
+</body>
+</html>
