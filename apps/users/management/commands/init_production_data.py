@@ -24,14 +24,11 @@ class Command(BaseCommand):
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"Error loading fixture: {e}"))
 
-        # 2. Explicitly ensure default login accounts and passwords
+        # 2. Explicitly ensure default login accounts and passwords (ADMIN & HR ONLY)
         creds = [
             ('NETCOM', 'Netcom@2026@Netcom', True, True, 'NETCOM', 'Administrator', 'admin@ncpli.com', 'ADMIN'),
             ('hr', 'hr12345', False, False, 'HR', 'Manager', 'hr@netcom.com', 'HR'),
-            ('emp', 'emp12345', False, False, 'Regular', 'Employee', 'emp@netcom.com', 'EMPLOYEE'),
-            ('08092003', 'emp12345', False, False, 'Mathan', 'M', 'mathan003m@gmail.com', 'EMPLOYEE'),
             ('emp1', 'emp12345', False, False, 'Goutham', 'HR', 'goutham@netcom.com', 'HR'),
-            ('emp2', 'emp12345', False, False, 'Goutham', 'Employee', 'goutham.emp@netcom.com', 'EMPLOYEE'),
         ]
 
         from apps.departments.models import Department
@@ -57,6 +54,7 @@ class Command(BaseCommand):
             user.is_superuser = is_super
             user.is_staff = is_staff
             user.is_active = True
+            user.email = email
             user.save()
 
             emp = getattr(user, 'employee', None)
@@ -82,3 +80,36 @@ class Command(BaseCommand):
                 emp.save(update_fields=['role', 'raw_password'])
 
             self.stdout.write(self.style.SUCCESS(f"User '{username}' verified (Role: {role}) and password configured."))
+
+        # 3. Clean database: Keep ONLY Admin and HR details, purge all test employees and clear all date/activity records
+        allowed_admin_hr_roles = ('ADMIN', 'HR')
+        non_admin_hr_employees = Employee.objects.exclude(role__in=allowed_admin_hr_roles)
+        for non_emp in non_admin_hr_employees:
+            user_ref = non_emp.user
+            self.stdout.write(f"Removing non-admin/HR employee record: {non_emp.employee_code} ({non_emp.display_name()})")
+            non_emp.delete()
+            if user_ref and not user_ref.is_superuser and not user_ref.is_staff:
+                user_ref.delete()
+
+        # Delete any stray non-admin/non-HR users without employee profiles
+        User.objects.filter(is_superuser=False, is_staff=False, employee__isnull=True).delete()
+
+        # Clear all transactional date/activity logs so database is completely fresh for use
+        from apps.attendance.models import Attendance, DailyWork, DailyWorkPlan, AttendanceAuditLog
+        from apps.leave_management.models import LeaveRequest, HRNotification, MonthlyLeaveCredit, OfficePaidLeave, MonthlyPermissionBalance
+        from apps.payroll.models import PayrollRecord
+        from apps.users.models import UserActiveSession
+
+        Attendance.objects.all().delete()
+        DailyWork.objects.all().delete()
+        DailyWorkPlan.objects.all().delete()
+        LeaveRequest.objects.all().delete()
+        AttendanceAuditLog.objects.all().delete()
+        HRNotification.objects.all().delete()
+        PayrollRecord.objects.all().delete()
+        MonthlyLeaveCredit.objects.all().delete()
+        MonthlyPermissionBalance.objects.all().delete()
+        OfficePaidLeave.objects.all().delete()
+        UserActiveSession.objects.all().delete()
+
+        self.stdout.write(self.style.SUCCESS("Database clean & fresh: Only Admin and HR details remain. All transactional date logs cleared successfully."))

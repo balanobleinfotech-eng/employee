@@ -508,6 +508,78 @@
   </div>
 </div>
 
+<!-- Comprehensive Employee Reports & Data Export Hub for Admin -->
+<div class="panel" id="adminReportsExportPanel" style="margin-bottom: 24px;">
+  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <div>
+      <h3 style="display: flex; align-items: center; gap: 8px; margin: 0;">
+        <span>📊</span> Employee Reports & Data Export Hub
+      </h3>
+      <small style="color: var(--gray-600);">Download date-to-date employee dossiers including daily work reports, images, punch in/out times, leaves, & permissions in Excel (.xlsx) and PDF (.pdf)</small>
+    </div>
+    <span class="badge badge-primary">Excel • PDF • ZIP</span>
+  </div>
+  <div class="panel-body">
+    <form method="GET" action="{% url 'reports:complete_export' %}" id="adminReportDownloadForm">
+      <!-- Employee Selector & Category Selector -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 12px;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-weight: 600; font-size: 12.5px;" for="adminReportEmpSelect">
+            👤 Select Particular Employee or Workforce
+          </label>
+          <select name="employee_id" id="adminReportEmpSelect" class="form-input">
+            <option value="">-- All Employees (Company-Wide) --</option>
+            {% for emp in report_employees %}
+            <option value="{{ emp.id }}">{{ emp.employee_code }} - {{ emp.display_name }} ({{ emp.department.name|default:"General" }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-weight: 600; font-size: 12.5px;" for="adminReportCategorySelect">
+            📂 Report Category
+          </label>
+          <select name="category" id="adminReportCategorySelect" class="form-input">
+            <option value="complete">📑 Complete Audit (Punches, Tasks, Leaves, Permissions, Profiles)</option>
+            <option value="attendance">⏱️ Attendance Records & Punch In/Out Times</option>
+            <option value="daily_work">📝 Daily Work Details & Report Images</option>
+            <option value="leaves">🏖️ Leave Requests, Balances & Permissions</option>
+            <option value="profiles">👤 Employee Profiles & Employment Details</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Date Range Filter -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-weight: 600; font-size: 12.5px;" for="adminRptFromDate">
+            📅 From Date
+          </label>
+          <input type="date" name="from_date" id="adminRptFromDate" value="{{ report_from_date }}" class="form-input" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-weight: 600; font-size: 12.5px;" for="adminRptToDate">
+            📅 To Date
+          </label>
+          <input type="date" name="to_date" id="adminRptToDate" value="{{ report_to_date }}" class="form-input" required>
+        </div>
+      </div>
+
+      <!-- Format Export Actions -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+        <button type="submit" name="format" value="excel" class="btn btn-success" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-weight: 600;">
+          📗 Download Excel (.xlsx)
+        </button>
+        <button type="submit" name="format" value="pdf" class="btn btn-danger" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-weight: 600;">
+          📕 Download PDF (.pdf)
+        </button>
+        <button type="submit" name="format" value="zip" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-weight: 600; background: #0284c7; border-color: #0284c7;">
+          📦 Download ZIP Bundle
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Employee and HR Attendance Details (Display only 10 records initially with scrolling) -->
 <div class="panel">
   <div class="panel-header">

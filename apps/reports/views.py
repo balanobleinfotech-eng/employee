@@ -264,6 +264,11 @@ def _build_pdf_report(target_emp, employees, attendances, leaves, daily_works, f
             )
 
         doc_status_text = "Submitted & Verified ✅" if target_emp.document else "Not Uploaded ⚠️"
+        total_emp_approved_leaves = leaves.filter(status='Approved').exclude(leave_type__icontains='Permission')
+        emp_leave_days_taken = sum(l.total_days for l in total_emp_approved_leaves)
+        emp_perm_leaves = leaves.filter(status='Approved', leave_type__icontains='Permission')
+        emp_perm_taken_count = emp_perm_leaves.count() + attendances.filter(is_permission=True).count()
+        work_type_desc = "🌍 Off-Site Field Work" if target_emp.is_offsite_employee else f"🏢 On-Site (Office: {target_emp.branch.name if target_emp.branch else 'Head Office'})"
 
         info_rows = [
             [
@@ -274,16 +279,21 @@ def _build_pdf_report(target_emp, employees, attendances, leaves, daily_works, f
             [
                 Paragraph("<b>Designation:</b>", td_bold), Paragraph(target_emp.designation.title if target_emp.designation else 'Staff', td_style),
                 Paragraph("<b>Role:</b>", td_bold), Paragraph(target_emp.get_role_display(), td_style),
-                Paragraph("<b>Joining Date:</b>", td_bold), Paragraph(str(target_emp.joining_date), td_bold),
+                Paragraph("<b>Work Location:</b>", td_bold), Paragraph(f"<b>{work_type_desc}</b>", td_bold),
             ],
             [
+                Paragraph("<b>Joining Date:</b>", td_bold), Paragraph(str(target_emp.joining_date), td_bold),
                 Paragraph("<b>Email:</b>", td_bold), Paragraph(target_emp.email or '-', td_style),
                 Paragraph("<b>Phone:</b>", td_bold), Paragraph(target_emp.phone or '-', td_style),
-                Paragraph("<b>Basic Salary:</b>", td_bold), Paragraph(f"₹{target_emp.basic_salary}", td_style),
             ],
             [
-                Paragraph("<b>Casual Leave Balance:</b>", td_bold), Paragraph(f"<b>{target_emp.casual_leave_balance} Days</b>", td_bold),
-                Paragraph("<b>Remaining Permission:</b>", td_bold), Paragraph(f"<b>{perm_balance.remaining_formatted()}</b>", td_bold),
+                Paragraph("<b>Total Leaves Taken:</b>", td_bold), Paragraph(f"<b>{emp_leave_days_taken} Days</b> in range", td_bold),
+                Paragraph("<b>Casual Leave Balance:</b>", td_bold), Paragraph(f"<b>{target_emp.casual_leave_balance} Days</b> remaining", td_bold),
+                Paragraph("<b>Permissions Taken:</b>", td_bold), Paragraph(f"<b>{emp_perm_taken_count} Requests</b> in range", td_bold),
+            ],
+            [
+                Paragraph("<b>Monthly Permission:</b>", td_bold), Paragraph(f"<b>{perm_balance.remaining_formatted()}</b> remaining", td_bold),
+                Paragraph("<b>Basic Salary:</b>", td_bold), Paragraph(f"₹{target_emp.basic_salary}", td_style),
                 Paragraph("<b>Submitted Document:</b>", td_bold), Paragraph(doc_status_text, td_bold),
             ],
         ]
@@ -308,22 +318,26 @@ def _build_pdf_report(target_emp, employees, attendances, leaves, daily_works, f
     total_punches = attendances.count()
     total_presents = attendances.filter(status='Present').count()
     total_half_days = attendances.filter(status='Half Day').count()
-    total_permissions = attendances.filter(is_permission=True).count()
-    total_approved_leaves = leaves.filter(status='Approved').count()
+    approved_leave_qs = leaves.filter(status='Approved').exclude(leave_type__icontains='Permission')
+    total_approved_leaves_count = approved_leave_qs.count()
+    total_leave_days_taken = sum(l.total_days for l in approved_leave_qs)
+    perm_leave_qs = leaves.filter(status='Approved', leave_type__icontains='Permission')
+    total_permissions_taken_count = perm_leave_qs.count() + attendances.filter(is_permission=True).count()
     total_work_logs = daily_works.count()
+    total_work_images = daily_works.exclude(work_image='').exclude(work_image__isnull=True).count()
 
     kpi_row = [
         [
-            Paragraph("<b>Total Staff:</b>", td_bold), Paragraph(str(employees.count()), td_style),
+            Paragraph("<b>Target Scope:</b>", td_bold), Paragraph(f"<b>{target_emp.employee_code} ({target_emp.display_name()})</b>" if target_emp else f"Workforce ({employees.count()} staff)", td_style),
             Paragraph("<b>Punches Logged:</b>", td_bold), Paragraph(str(total_punches), td_style),
             Paragraph("<b>Full Days (>=9h):</b>", td_bold), Paragraph(str(total_presents), td_style),
             Paragraph("<b>Half Days (>=4.5h):</b>", td_bold), Paragraph(str(total_half_days), td_style),
         ],
         [
-            Paragraph("<b>Permissions:</b>", td_bold), Paragraph(str(total_permissions), td_style),
-            Paragraph("<b>Approved Leaves:</b>", td_bold), Paragraph(str(total_approved_leaves), td_style),
-            Paragraph("<b>Daily Tasks Logged:</b>", td_bold), Paragraph(str(total_work_logs), td_style),
-            Paragraph("<b>Report Status:</b>", td_bold), Paragraph("Verified Complete ✅", td_style),
+            Paragraph("<b>Total Leaves Taken:</b>", td_bold), Paragraph(f"<b>{total_leave_days_taken} Days</b> ({total_approved_leaves_count} approved)", td_bold),
+            Paragraph("<b>Permissions Taken:</b>", td_bold), Paragraph(f"<b>{total_permissions_taken_count} Requests</b> (Up to 2h each)", td_bold),
+            Paragraph("<b>Daily Reports:</b>", td_bold), Paragraph(f"<b>{total_work_logs} Logged</b> ({total_work_images} with Photos)", td_style),
+            Paragraph("<b>Work Mode:</b>", td_bold), Paragraph(("🌍 Off-Site" if target_emp.is_offsite_employee else "🏢 On-Site") if target_emp else "🏢 On-Site & 🌍 Off-Site", td_style),
         ]
     ]
     kpi_table = Table(kpi_row, colWidths=[1.4 * inch, 1.2 * inch, 1.4 * inch, 1.2 * inch, 1.4 * inch, 1.2 * inch, 1.4 * inch, 1.3 * inch])
@@ -503,6 +517,16 @@ def _build_pdf_report(target_emp, employees, attendances, leaves, daily_works, f
     if category in ('complete', 'all', 'leaves'):
         sec_num = "2" if target_emp else "3"
         story.append(Paragraph(f"{sec_num}. Leave Requests & Balances ({leaves.count()} records)", h1_style))
+        total_approved_lv = leaves.filter(status='Approved').exclude(leave_type__icontains='Permission')
+        tot_days_taken = sum(l.total_days for l in total_approved_lv)
+        perm_qs = leaves.filter(status='Approved', leave_type__icontains='Permission')
+        tot_perm_taken = perm_qs.count() + attendances.filter(is_permission=True).count()
+        story.append(Paragraph(
+            f"<b>Total Leaves Taken:</b> {tot_days_taken} Days ({total_approved_lv.count()} approved requests) &nbsp;|&nbsp; "
+            f"<b>Casual Leave Balance:</b> {target_emp.casual_leave_balance if target_emp else 'N/A'} Days &nbsp;|&nbsp; "
+            f"<b>Permissions Taken:</b> {tot_perm_taken} Approved Requests (Up to 2h each)",
+            subtitle_style
+        ))
         lv_table_data = [[
             Paragraph("Staff", th_style),
             Paragraph("Type", th_style),
@@ -549,30 +573,35 @@ def _build_pdf_report(target_emp, employees, attendances, leaves, daily_works, f
             Paragraph("Mode", th_style),
             Paragraph("Location / Site", th_style),
             Paragraph("Status", th_style),
-            Paragraph("Photo", th_style),
+            Paragraph("Report Photo Proof", th_style),
         ]]
         for wk in daily_works[:80]:
             mode_lbl = "📍 Off-Site" if wk.is_offsite else "🏢 On-Site"
             loc_lbl = wk.location_notes if wk.location_notes else ("Netcom Head Office" if not wk.is_offsite else "-")
+            photo_flowable = _safe_image_flowable(wk.work_image, width=1.1 * inch, height=0.75 * inch)
+            if not photo_flowable:
+                photo_flowable = Paragraph("<font color='#94a3b8'>No Photo</font>", td_style)
+
             wk_table_data.append([
                 Paragraph(str(wk.date), td_style),
-                Paragraph(f"<b>{wk.employee.employee_code}</b> {wk.employee.display_name()[:14]}", td_style),
+                Paragraph(f"<b>{wk.employee.employee_code}</b><br/>{wk.employee.display_name()[:14]}", td_style),
                 Paragraph(wk.project_name, td_bold),
-                Paragraph((wk.work_details[:50] + '...') if len(wk.work_details) > 50 else wk.work_details, td_style),
+                Paragraph((wk.work_details[:65] + '...') if len(wk.work_details) > 65 else wk.work_details, td_style),
                 Paragraph(mode_lbl, td_style),
-                Paragraph((loc_lbl[:24] + '...') if len(loc_lbl) > 24 else loc_lbl, td_style),
+                Paragraph((loc_lbl[:22] + '...') if len(loc_lbl) > 22 else loc_lbl, td_style),
                 Paragraph(wk.status, td_style),
-                Paragraph("Yes 📸" if bool(wk.work_image) else "No", td_style),
+                photo_flowable,
             ])
         if daily_works.count() == 0:
             wk_table_data.append([Paragraph("No daily work logs recorded in selected date range.", td_style)] + [Paragraph("", td_style)] * 7)
 
-        wk_t = Table(wk_table_data, colWidths=[0.85 * inch, 1.3 * inch, 1.4 * inch, 2.7 * inch, 0.9 * inch, 1.6 * inch, 0.9 * inch, 0.85 * inch])
+        wk_t = Table(wk_table_data, colWidths=[0.85 * inch, 1.25 * inch, 1.35 * inch, 2.5 * inch, 0.85 * inch, 1.35 * inch, 0.75 * inch, 1.2 * inch])
         wk_t.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), primary_color),
             ('GRID', (0, 0), (-1, -1), 0.5, border_color),
             ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, gray_bg]),
             ('PADDING', (0, 0), (-1, -1), 2.5),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
         story.append(wk_t)
         story.append(Spacer(1, 6))
@@ -643,15 +672,30 @@ def _build_excel_report(target_emp, employees, attendances, leaves, daily_works,
     ws_main['A2'] = f"Date Range: {from_d.strftime('%b %d, %Y')} to {to_d.strftime('%b %d, %Y')} | Category: {category.title()} | Generated: {date.today().strftime('%b %d, %Y')} by {operator_username}"
     ws_main['A2'].font = Font(name='Calibri', size=10, italic=True, color='475569')
 
+    total_approved_leaves = leaves.filter(status='Approved').exclude(leave_type__icontains='Permission').count()
+    total_leave_days_taken = sum(l.total_days for l in leaves.filter(status='Approved').exclude(leave_type__icontains='Permission'))
+    perm_leaves = leaves.filter(status='Approved', leave_type__icontains='Permission')
+    total_perm_count = perm_leaves.count() + attendances.filter(is_permission=True).count()
+    total_work_images_count = daily_works.exclude(work_image='').exclude(work_image__isnull=True).count()
+    work_loc_str = ("Off-Site Field Work (Geofence Exempt)" if (target_emp and target_emp.is_offsite_employee) else "On-Site Office (Branch Geofenced)") if target_emp else "All Staff (On-Site & Off-Site)"
+
+    from apps.leave_management.views import get_or_create_monthly_permission_balance
+    rem_perm_str = get_or_create_monthly_permission_balance(target_emp, to_d.year, to_d.month).remaining_formatted() if target_emp else "N/A"
+
     summary_metrics = [
         ("Report Scope", scope_str),
+        ("Work Location Classification", work_loc_str),
+        ("Date Range Filter", f"{from_d.strftime('%Y-%m-%d')} to {to_d.strftime('%Y-%m-%d')}"),
         ("Total Employees in Scope", employees.count()),
-        ("Total Attendance Records (Date Range)", attendances.count()),
+        ("Total Attendance / Punch Records", attendances.count()),
         ("Full-Day Attendance Logs (>=9h)", attendances.filter(status='Present').count()),
         ("Half-Day Attendance Logs (>=4.5h)", attendances.filter(status='Half Day').count()),
-        ("Approved Permissions", attendances.filter(is_permission=True).count()),
-        ("Approved Leave Records", leaves.filter(status='Approved').count()),
+        ("Total Leaves Taken (Approved Days)", f"{total_leave_days_taken} Days ({total_approved_leaves} requests)"),
+        ("Casual Leave Balance", f"{target_emp.casual_leave_balance} Days" if target_emp else "N/A"),
+        ("Total Permissions Taken (Approved)", f"{total_perm_count} Requests (Up to 2h each)"),
+        ("Remaining Monthly Permission", rem_perm_str),
         ("Daily Work Logs Submitted", daily_works.count()),
+        ("Daily Work Logs with Photo Attached", total_work_images_count),
     ]
     ws_main['A4'] = "Key Performance Indicator (KPI)"
     ws_main['B4'] = "Metric Value"
@@ -675,9 +719,9 @@ def _build_excel_report(target_emp, employees, attendances, leaves, daily_works,
         ws_audit.views.sheetView[0].showGridLines = True
         audit_cols = [
             "Date", "Employee Code", "Employee Name", "Department", "Designation",
-            "Punch In", "Punch Out", "Total Work Duration", "In Location / GPS", "Out Location / GPS",
+            "Work Location Type", "Punch In", "Punch Out", "Total Work Duration", "In Location / GPS", "Out Location / GPS",
             "Attendance Status", "Work Mode", "Project / Module", "Daily Work Details",
-            "Daily Work Status", "Site / Location Notes", "Photo Attached"
+            "Daily Work Status", "Site / Location Notes", "Report Image Attached"
         ]
         for col_num, h_text in enumerate(audit_cols, 1):
             cell = ws_audit.cell(row=1, column=col_num, value=h_text)
@@ -704,6 +748,7 @@ def _build_excel_report(target_emp, employees, attendances, leaves, daily_works,
             e_name = emp_obj.display_name() if emp_obj else ''
             e_dept = (emp_obj.department.name if emp_obj and emp_obj.department else '-')
             e_desig = (emp_obj.designation.title if emp_obj and emp_obj.designation else (emp_obj.get_role_display() if emp_obj else '-'))
+            e_work_type = ("Off-Site Field" if emp_obj.is_offsite_employee else "On-Site Office") if emp_obj else '-'
 
             in_t = str(att_obj.in_time)[:5] if (att_obj and att_obj.in_time) else '--:--'
             out_t = str(att_obj.out_time)[:5] if (att_obj and att_obj.out_time) else '--:--'
@@ -716,10 +761,10 @@ def _build_excel_report(target_emp, employees, attendances, leaves, daily_works,
                 for dw in day_works:
                     mode_str = "Off-Site (Field/Client)" if dw.is_offsite else "On-Site (Office)"
                     loc_notes = dw.location_notes or ("Netcom Head Office / On-Site Premises" if not dw.is_offsite else "-")
-                    has_pic = "Yes (Attached)" if bool(dw.work_image) else "No"
+                    has_pic = f"Yes ({os.path.basename(dw.work_image.name)})" if dw.work_image else "No"
 
                     row_vals = [
-                        str(a_date), e_code, e_name, e_dept, e_desig,
+                        str(a_date), e_code, e_name, e_dept, e_desig, e_work_type,
                         in_t, out_t, dur_t, in_loc, out_loc,
                         att_stat, mode_str, dw.project_name,
                         dw.work_details, dw.status, loc_notes, has_pic
@@ -729,7 +774,7 @@ def _build_excel_report(target_emp, employees, attendances, leaves, daily_works,
                     r_idx += 1
             else:
                 row_vals = [
-                    str(a_date), e_code, e_name, e_dept, e_desig,
+                    str(a_date), e_code, e_name, e_dept, e_desig, e_work_type,
                     in_t, out_t, dur_t, in_loc, out_loc,
                     att_stat, "-", "-", "No daily report submitted", "-", "-", "No"
                 ]
@@ -781,9 +826,9 @@ def _build_excel_report(target_emp, employees, attendances, leaves, daily_works,
         ws_att = wb.create_sheet(title="Attendance History")
         ws_att.views.sheetView[0].showGridLines = True
         att_cols = [
-            "Date", "Employee Code", "Employee Name", "Department",
+            "Date", "Employee Code", "Employee Name", "Department", "Work Location Type",
             "Punch In", "Punch Out", "Total Work Duration", "Status",
-            "2h Permission", "Leave Type", "Punch In Location / GPS", "Punch Out Location / GPS", "Update Source"
+            "2h Permission Approved", "Punch In Location / GPS", "Punch Out Location / GPS", "Update Source"
         ]
         for col_num, h_text in enumerate(att_cols, 1):
             cell = ws_att.cell(row=1, column=col_num, value=h_text)
@@ -792,16 +837,18 @@ def _build_excel_report(target_emp, employees, attendances, leaves, daily_works,
             cell.alignment = Alignment(horizontal='center')
 
         for r_idx, att in enumerate(attendances, 2):
+            emp_loc_type = "Off-Site Field" if att.employee.is_offsite_employee else "On-Site Office"
+            perm_disp = f"Yes ({att.permission_hours}h)" if att.is_permission else "No"
             ws_att.cell(row=r_idx, column=1, value=str(att.date)).border = thin_border
             ws_att.cell(row=r_idx, column=2, value=att.employee.employee_code).border = thin_border
             ws_att.cell(row=r_idx, column=3, value=att.employee.display_name()).border = thin_border
             ws_att.cell(row=r_idx, column=4, value=att.employee.department.name if att.employee.department else '-').border = thin_border
-            ws_att.cell(row=r_idx, column=5, value=str(att.in_time)[:5] if att.in_time else '--:--').border = thin_border
-            ws_att.cell(row=r_idx, column=6, value=str(att.out_time)[:5] if att.out_time else '--:--').border = thin_border
-            ws_att.cell(row=r_idx, column=7, value=att.total_work_time).border = thin_border
-            ws_att.cell(row=r_idx, column=8, value=att.status).border = thin_border
-            ws_att.cell(row=r_idx, column=9, value="Yes" if att.is_permission else "No").border = thin_border
-            ws_att.cell(row=r_idx, column=10, value=att.leave_type or '-').border = thin_border
+            ws_att.cell(row=r_idx, column=5, value=emp_loc_type).border = thin_border
+            ws_att.cell(row=r_idx, column=6, value=str(att.in_time)[:5] if att.in_time else '--:--').border = thin_border
+            ws_att.cell(row=r_idx, column=7, value=str(att.out_time)[:5] if att.out_time else '--:--').border = thin_border
+            ws_att.cell(row=r_idx, column=8, value=att.total_work_time).border = thin_border
+            ws_att.cell(row=r_idx, column=9, value=att.status).border = thin_border
+            ws_att.cell(row=r_idx, column=10, value=perm_disp).border = thin_border
             ws_att.cell(row=r_idx, column=11, value=att.in_location or '-').border = thin_border
             ws_att.cell(row=r_idx, column=12, value=att.out_location or '-').border = thin_border
             ws_att.cell(row=r_idx, column=13, value=att.update_source or 'System').border = thin_border
@@ -815,8 +862,8 @@ def _build_excel_report(target_emp, employees, attendances, leaves, daily_works,
         ws_lv = wb.create_sheet(title="Leave Requests")
         ws_lv.views.sheetView[0].showGridLines = True
         lv_cols = [
-            "Request ID", "Employee Code", "Employee Name", "Leave Type",
-            "From Date", "To Date", "Total Days", "Status",
+            "Request ID", "Employee Code", "Employee Name", "Category", "Leave / Permission Type",
+            "From Date", "To Date", "Total Days / Hours", "Status",
             "Classification", "Reason / Purpose", "Reviewer", "Rejection Reason"
         ]
         for col_num, h_text in enumerate(lv_cols, 1):
@@ -826,18 +873,22 @@ def _build_excel_report(target_emp, employees, attendances, leaves, daily_works,
             cell.alignment = Alignment(horizontal='center')
 
         for r_idx, lv in enumerate(leaves, 2):
+            is_perm_req = "permission" in lv.leave_type.lower()
+            rec_cat = "2h Permission Request" if is_perm_req else "Leave Application"
+            dur_label = f"{lv.total_days} Days" if not is_perm_req else "Up to 2 Hours"
             ws_lv.cell(row=r_idx, column=1, value=lv.id).border = thin_border
             ws_lv.cell(row=r_idx, column=2, value=lv.employee.employee_code).border = thin_border
             ws_lv.cell(row=r_idx, column=3, value=lv.employee.display_name()).border = thin_border
-            ws_lv.cell(row=r_idx, column=4, value=lv.leave_type).border = thin_border
-            ws_lv.cell(row=r_idx, column=5, value=str(lv.from_date)).border = thin_border
-            ws_lv.cell(row=r_idx, column=6, value=str(lv.to_date)).border = thin_border
-            ws_lv.cell(row=r_idx, column=7, value=lv.total_days).border = thin_border
-            ws_lv.cell(row=r_idx, column=8, value=lv.status).border = thin_border
-            ws_lv.cell(row=r_idx, column=9, value=lv.approval_type or ('Paid' if lv.is_paid else 'Unpaid')).border = thin_border
-            ws_lv.cell(row=r_idx, column=10, value=lv.reason).border = thin_border
-            ws_lv.cell(row=r_idx, column=11, value=lv.reviewed_by.username if lv.reviewed_by else '-').border = thin_border
-            ws_lv.cell(row=r_idx, column=12, value=lv.rejection_reason or '-').border = thin_border
+            ws_lv.cell(row=r_idx, column=4, value=rec_cat).border = thin_border
+            ws_lv.cell(row=r_idx, column=5, value=lv.leave_type).border = thin_border
+            ws_lv.cell(row=r_idx, column=6, value=str(lv.from_date)).border = thin_border
+            ws_lv.cell(row=r_idx, column=7, value=str(lv.to_date)).border = thin_border
+            ws_lv.cell(row=r_idx, column=8, value=dur_label).border = thin_border
+            ws_lv.cell(row=r_idx, column=9, value=lv.status).border = thin_border
+            ws_lv.cell(row=r_idx, column=10, value=lv.approval_type or ('Paid' if lv.is_paid else 'Unpaid')).border = thin_border
+            ws_lv.cell(row=r_idx, column=11, value=lv.reason).border = thin_border
+            ws_lv.cell(row=r_idx, column=12, value=lv.reviewed_by.username if lv.reviewed_by else '-').border = thin_border
+            ws_lv.cell(row=r_idx, column=13, value=lv.rejection_reason or '-').border = thin_border
 
         for col in ws_lv.columns:
             max_len = max(len(str(cell.value or '')) for cell in col)
@@ -849,7 +900,8 @@ def _build_excel_report(target_emp, employees, attendances, leaves, daily_works,
         ws_wk.views.sheetView[0].showGridLines = True
         wk_cols = [
             "Date", "Employee Code", "Employee Name", "Project / Module",
-            "Work Accomplishments", "Status", "Work Mode", "Location / Site Details", "Has Image"
+            "Work Accomplishments", "Status", "Work Mode", "Location / Site Details",
+            "Report Image Attached", "Report Image File / Path"
         ]
         for col_num, h_text in enumerate(wk_cols, 1):
             cell = ws_wk.cell(row=1, column=col_num, value=h_text)
@@ -860,6 +912,7 @@ def _build_excel_report(target_emp, employees, attendances, leaves, daily_works,
         for r_idx, wk in enumerate(daily_works, 2):
             mode_lbl = "Off-Site (Field/Client)" if wk.is_offsite else "On-Site (Office)"
             loc_val = wk.location_notes or ("Netcom Head Office / On-Site Premises" if not wk.is_offsite else "-")
+            img_val = os.path.basename(wk.work_image.name) if wk.work_image else "None"
             ws_wk.cell(row=r_idx, column=1, value=str(wk.date)).border = thin_border
             ws_wk.cell(row=r_idx, column=2, value=wk.employee.employee_code).border = thin_border
             ws_wk.cell(row=r_idx, column=3, value=wk.employee.display_name()).border = thin_border
@@ -868,7 +921,8 @@ def _build_excel_report(target_emp, employees, attendances, leaves, daily_works,
             ws_wk.cell(row=r_idx, column=6, value=wk.status).border = thin_border
             ws_wk.cell(row=r_idx, column=7, value=mode_lbl).border = thin_border
             ws_wk.cell(row=r_idx, column=8, value=loc_val).border = thin_border
-            ws_wk.cell(row=r_idx, column=9, value="Yes" if bool(wk.work_image) else "No").border = thin_border
+            ws_wk.cell(row=r_idx, column=9, value="Yes (Attached)" if bool(wk.work_image) else "No").border = thin_border
+            ws_wk.cell(row=r_idx, column=10, value=img_val).border = thin_border
 
         for col in ws_wk.columns:
             max_len = max(len(str(cell.value or '')) for cell in col)

@@ -792,6 +792,9 @@ def admin_dashboard(request, profile):
         'missing_punch_out_attendances': Attendance.objects.filter(in_time__isnull=False, out_time__isnull=True).select_related('employee', 'employee__user', 'employee__department').order_by('-date')[:25],
         'hr_notifications': HRNotification.objects.filter(is_read=False)[:10],
         'employee_messages': HRNotification.objects.filter(recipient_role='HR').order_by('-created_at')[:30],
+        'report_employees': Employee.objects.select_related('user', 'department').all().order_by('employee_code'),
+        'report_from_date': (today - timedelta(days=30)).strftime('%Y-%m-%d'),
+        'report_to_date': today.strftime('%Y-%m-%d'),
         'permission_balance': get_or_create_monthly_permission_balance(profile, today.year, today.month),
         'calendar_permission_balance': get_or_create_monthly_permission_balance(calendar_employee, calendar_context['current_year'], calendar_context['current_month']),
     }
