@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
@@ -10,7 +11,9 @@ class Command(BaseCommand):
     help = 'Seeds initial production data (departments, employees, attendance, payroll) and guarantees default credentials.'
 
     def handle(self, *args, **options):
-        fixture_path = Path(__file__).resolve().parent.parent.parent.parent / 'database' / 'seed_data.json'
+        fixture_path = settings.BASE_DIR / 'database' / 'seed_data.json'
+        if not fixture_path.exists():
+            fixture_path = Path(__file__).resolve().parent.parent.parent.parent.parent / 'database' / 'seed_data.json'
 
         # 1. Load seed fixture if database is missing employees
         if Employee.objects.count() == 0 and fixture_path.exists():
@@ -33,6 +36,11 @@ class Command(BaseCommand):
 
         from apps.departments.models import Department
         default_dept = Department.objects.first()
+        if not default_dept:
+            default_dept, _ = Department.objects.get_or_create(
+                name='General',
+                defaults={'description': 'General Department'}
+            )
 
         for username, password, is_super, is_staff, first, last, email, role in creds:
             user, created = User.objects.get_or_create(

@@ -1,0 +1,14 @@
+.git
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.log
+logs/*.log
+database/*.sqlite3
+database/backups/*.sql
+database/backups/*.json
+test_*.sqlite3

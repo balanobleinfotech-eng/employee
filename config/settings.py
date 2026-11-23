@@ -125,6 +125,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 ASGI_APPLICATION = 'config.asgi.application'
 
+(BASE_DIR / 'database').mkdir(parents=True, exist_ok=True)
+
 # Database Configuration (Railway DATABASE_URL / MySQL with fallback to SQLite)
 database_url = os.getenv('DATABASE_URL') or os.getenv('MYSQL_URL')
 mysql_host = os.getenv('MYSQLHOST') or os.getenv('DB_HOST', '127.0.0.1')
@@ -143,6 +145,25 @@ if database_url:
             conn_max_age=600,
             ssl_require=False
         )
+    }
+    if 'mysql' in DATABASES['default'].get('ENGINE', ''):
+        DATABASES['default'].setdefault('OPTIONS', {})
+        DATABASES['default']['OPTIONS'].setdefault('charset', 'utf8mb4')
+        DATABASES['default']['OPTIONS'].setdefault('init_command', "SET sql_mode='STRICT_TRANS_TABLES'")
+elif os.getenv('MYSQLHOST') and os.getenv('MYSQLHOST') not in ('127.0.0.1', 'localhost'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': mysql_db,
+            'USER': mysql_user,
+            'PASSWORD': mysql_password,
+            'HOST': mysql_host,
+            'PORT': mysql_port,
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            }
+        }
     }
 elif use_mysql:
     # Test if MySQL port is accessible to gracefully fallback to SQLite if offline
