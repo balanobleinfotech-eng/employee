@@ -33,6 +33,12 @@
           <h2>{{ employee.display_name }}</h2>
           <p style="color: var(--gray-600);">{{ employee.designation.title|default:"Staff" }} • {{ employee.department.name|default:"General" }}</p>
           <span class="badge badge-primary">{{ employee.role }}</span>
+          {% if employee.profile_picture %}
+          <div style="margin-top: 8px; display: flex; gap: 8px;">
+            <a href="{{ employee.profile_picture.url }}" target="_blank" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px;">👁️ View Photo</a>
+            <a href="{% url 'employees:download_file' employee.id 'photo' %}" class="btn btn-outline btn-sm" style="font-size: 11px; padding: 2px 8px; color: #0284c7; border-color: #38bdf8;">📥 Download Photo</a>
+          </div>
+          {% endif %}
         </div>
       </div>
 
@@ -77,9 +83,14 @@
           <th>Submitted Document</th>
           <td>
             {% if employee.document %}
-            <a href="{{ employee.document.url }}" target="_blank" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 4px; color: #2563eb; border-color: #3b82f6;">
-              📄 View Submitted Document
-            </a>
+            <div style="display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <a href="{{ employee.document.url }}" target="_blank" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 4px; color: #2563eb; border-color: #3b82f6;">
+                📄 View Submitted Document
+              </a>
+              <a href="{% url 'employees:download_file' employee.id 'document' %}" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 4px; color: #059669; border-color: #34d399;">
+                📥 Download Document
+              </a>
+            </div>
             {% else %}
             <span style="color: #94a3b8; font-size: 12px;">No document uploaded</span>
             {% endif %}

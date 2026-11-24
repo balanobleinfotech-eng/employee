@@ -211,12 +211,38 @@
 
             <div class="form-group">
               <label class="form-label" for="{{ form.profile_picture.id_for_label }}">Profile Picture</label>
+              {% if form.instance.pk and form.instance.profile_picture %}
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <img src="{{ form.instance.profile_picture.url }}" alt="Profile Photo" style="width: 44px; height: 44px; object-fit: cover; border-radius: 50%; border: 2px solid #3b82f6;">
+                <div>
+                  <div style="font-size: 11px; font-weight: 600; color: #16a34a;">Current Photo Uploaded ✅</div>
+                  <div style="display: flex; gap: 6px; margin-top: 3px;">
+                    <a href="{{ form.instance.profile_picture.url }}" target="_blank" class="btn btn-outline btn-sm" style="padding: 2px 8px; font-size: 11px;">👁️ View</a>
+                    <a href="{% url 'employees:download_file' form.instance.pk 'photo' %}" class="btn btn-success btn-sm" style="padding: 2px 8px; font-size: 11px;">📥 Download</a>
+                  </div>
+                </div>
+              </div>
+              <small style="font-size: 11px; color: #64748b; display: block; margin-bottom: 4px;">Choose new file to change / replace profile photo:</small>
+              {% endif %}
               {{ form.profile_picture }}
               {% if form.profile_picture.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.profile_picture.errors.0 }}</div>{% endif %}
             </div>
 
             <div class="form-group">
               <label class="form-label" for="{{ form.document.id_for_label }}">Identity / Onboarding Document (PDF / Image)</label>
+              {% if form.instance.pk and form.instance.document %}
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <span style="font-size: 26px;">📄</span>
+                <div>
+                  <div style="font-size: 12px; font-weight: 600; color: #1e293b; word-break: break-all;">{{ form.instance.document.name }}</div>
+                  <div style="display: flex; gap: 6px; margin-top: 3px;">
+                    <a href="{{ form.instance.document.url }}" target="_blank" class="btn btn-outline btn-sm" style="padding: 2px 8px; font-size: 11px;">📄 View</a>
+                    <a href="{% url 'employees:download_file' form.instance.pk 'document' %}" class="btn btn-success btn-sm" style="padding: 2px 8px; font-size: 11px;">📥 Download</a>
+                  </div>
+                </div>
+              </div>
+              <small style="font-size: 11px; color: #64748b; display: block; margin-bottom: 4px;">Choose new file to change / replace document:</small>
+              {% endif %}
               {{ form.document }}
               {% if form.document.errors %}<div style="color: var(--danger); font-size: 12px; margin-top: 4px;">{{ form.document.errors.0 }}</div>{% endif %}
             </div>

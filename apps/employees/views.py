@@ -1,4 +1,7 @@
+import os
+import mimetypes
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import FileResponse, Http404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
@@ -190,3 +193,53 @@ def employee_delete(request, pk):
     user.delete()  # Cascades to employee
     messages.success(request, f"Account and records for '{name}' deleted permanently.")
     return redirect(request.META.get('HTTP_REFERER') or 'dashboard:index')
+
+
+@login_required
+def download_employee_file(request, pk, file_type):
+    """
+    Secure file download view for HR and Admin:
+    - file_type: 'photo' (profile picture) or 'document' (submitted doc)
+    - Sets Content-Disposition: attachment; filename="..." with proper MIME type
+    """
+    employee = get_object_or_404(Employee, pk=pk)
+    current_profile = getattr(request.user, 'employee', None)
+    is_authorized = (
+        request.user.is_superuser
+        or request.user.is_staff
+        or (current_profile and current_profile.role in ('ADMIN', 'HR'))
+        or employee.user == request.user
+    )
+    if not is_authorized:
+        messages.error(request, "Permission denied to download employee files.")
+        return redirect('dashboard:index')
+
+    if file_type == 'photo':
+        field = employee.profile_picture
+        default_name = f"{employee.employee_code}_Profile_Picture"
+    elif file_type == 'document':
+        field = employee.document
+        default_name = f"{employee.employee_code}_Document"
+    else:
+        raise Http404("Invalid file type requested.")
+
+    if not field:
+        messages.error(request, f"No {file_type} uploaded for employee {employee.display_name()}.")
+        return redirect(request.META.get('HTTP_REFERER') or 'dashboard:index')
+
+    try:
+        file_path = field.path
+        if not os.path.exists(file_path):
+            messages.error(request, f"File not found on server for employee {employee.display_name()}.")
+            return redirect(request.META.get('HTTP_REFERER') or 'dashboard:index')
+
+        content_type, _ = mimetypes.guess_type(file_path)
+        content_type = content_type or 'application/octet-stream'
+
+        ext = os.path.splitext(field.name)[1]
+        filename = f"{default_name}{ext}"
+
+        return FileResponse(open(file_path, 'rb'), content_type=content_type, as_attachment=True, filename=filename)
+    except Exception as e:
+        messages.error(request, f"Error downloading file: {e}")
+        return redirect(request.META.get('HTTP_REFERER') or 'dashboard:index')

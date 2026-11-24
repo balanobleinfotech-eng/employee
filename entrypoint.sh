@@ -38,23 +38,13 @@ echo "[*] Collecting static assets..."
 python manage.py collectstatic --no-input || true
 
 # 5. Resolve Port and launch Gunicorn
+PORT=$(echo "$PORT" | tr -d '\r' | tr -d ' ')
 PORT="${PORT:-8000}"
-echo "[*] Binding Gunicorn web server to port ${PORT}..."
+echo "[*] Binding Gunicorn web server to 0.0.0.0:${PORT}..."
 
-if [ "$PORT" != "8000" ]; then
-    echo "[*] Also binding to port 8000 for Railway compatibility..."
-    exec gunicorn config.wsgi:application \
-        --bind "0.0.0.0:${PORT}" \
-        --bind "0.0.0.0:8000" \
-        --workers 2 \
-        --timeout 120 \
-        --access-logfile - \
-        --error-logfile -
-else
-    exec gunicorn config.wsgi:application \
-        --bind "0.0.0.0:8000" \
-        --workers 2 \
-        --timeout 120 \
-        --access-logfile - \
-        --error-logfile -
-fi
+exec gunicorn config.wsgi:application \
+    --bind "0.0.0.0:${PORT}" \
+    --workers 2 \
+    --timeout 120 \
+    --access-logfile - \
+    --error-logfile -

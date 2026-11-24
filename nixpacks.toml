@@ -1,5 +1,8 @@
+[phases.setup]
+cmds = ["sed -i 's/\r$//' entrypoint.sh", "chmod +x entrypoint.sh"]
+
 [phases.build]
 cmds = ["python manage.py collectstatic --no-input"]
 
 [start]
-cmd = "sh entrypoint.sh"
+cmd = "/bin/sh entrypoint.sh"

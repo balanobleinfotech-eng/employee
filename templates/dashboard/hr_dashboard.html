@@ -860,13 +860,29 @@
           <td>
             <div style="display: flex; align-items: center; gap: 8px;">
               {% if emp.profile_picture %}
-              <img src="{{ emp.profile_picture.url }}" alt="{{ emp.display_name }}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 50%; border: 1px solid #cbd5e1;">
+              <div style="position: relative; display: inline-block;">
+                <img src="{{ emp.profile_picture.url }}" alt="{{ emp.display_name }}"
+                     onclick="openPhotoModal('{{ emp.profile_picture.url }}', '{{ emp.employee_code }}', '{{ emp.display_name }}', '{% url 'employees:download_file' emp.id 'photo' %}')"
+                     style="width: 36px; height: 36px; object-fit: cover; border-radius: 50%; border: 2px solid #3b82f6; cursor: pointer;"
+                     title="Click to view full photo">
+              </div>
               {% else %}
-              <div style="width: 32px; height: 32px; border-radius: 50%; background: #e2e8f0; color: #475569; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;">
+              <div style="width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0; color: #475569; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; border: 1px solid #cbd5e1;">
                 {{ emp.user.username|make_list|first|upper }}
               </div>
               {% endif %}
-              <b>{{ emp.employee_code }}</b>
+              <div>
+                <b>{{ emp.employee_code }}</b>
+                <div style="display: flex; gap: 4px; margin-top: 2px; font-size: 10px;">
+                  {% if emp.profile_picture %}
+                  <a href="javascript:void(0)" onclick="openPhotoModal('{{ emp.profile_picture.url }}', '{{ emp.employee_code }}', '{{ emp.display_name }}', '{% url 'employees:download_file' emp.id 'photo' %}')" style="color: #2563eb; text-decoration: none;" title="View Photo">👁️ View</a>
+                  <span style="color: #cbd5e1;">•</span>
+                  <a href="{% url 'employees:download_file' emp.id 'photo' %}" style="color: #16a34a; text-decoration: none; font-weight: 600;" title="Download Profile Photo">📥 DL</a>
+                  {% else %}
+                  <span style="color: #94a3b8;">No photo</span>
+                  {% endif %}
+                </div>
+              </div>
             </div>
           </td>
           <td>
@@ -882,11 +898,16 @@
           </td>
           <td>
             {% if emp.document %}
-            <a href="{{ emp.document.url }}" target="_blank" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 11.5px; color: #2563eb; border-color: #3b82f6;" title="View Submitted Document">
-              📄 View Doc
-            </a>
+            <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+              <a href="javascript:void(0)" onclick="openDocModal('{{ emp.document.url }}', '{{ emp.employee_code }}', '{{ emp.display_name }}', '{% url 'employees:download_file' emp.id 'document' %}')" class="btn btn-outline btn-sm" style="padding: 2px 7px; font-size: 11px; color: #2563eb; border-color: #3b82f6; display: inline-flex; align-items: center; gap: 2px;" title="View Submitted Document">
+                📄 View
+              </a>
+              <a href="{% url 'employees:download_file' emp.id 'document' %}" class="btn btn-success btn-sm" style="padding: 2px 7px; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 2px;" title="Download Document">
+                📥 DL
+              </a>
+            </div>
             {% else %}
-            <span style="color: #94a3b8; font-size: 11.5px;">None</span>
+            <span style="color: #94a3b8; font-size: 11.5px; font-style: italic;">None</span>
             {% endif %}
           </td>
           <td>
@@ -920,7 +941,7 @@
           </td>
           <td>
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-              <button type="button" onclick="openHrEditEmployeeModal('{{ emp.id }}', '{{ emp.employee_code }}', '{{ emp.user.first_name }}', '{{ emp.user.last_name }}', '{{ emp.email }}', '{{ emp.phone }}', '{{ emp.department.id|default:'' }}', '{{ emp.casual_leave_balance }}', '{{ emp.raw_password|default:'' }}', '{{ emp.joining_date|date:'Y-m-d' }}', '{{ emp.is_offsite_employee|yesno:'true,false' }}', '{{ emp.branch.id|default:'' }}')" class="btn btn-primary btn-sm" style="font-weight: 600;">
+              <button type="button" onclick="openHrEditEmployeeModal('{{ emp.id }}', '{{ emp.employee_code }}', '{{ emp.user.first_name }}', '{{ emp.user.last_name }}', '{{ emp.email }}', '{{ emp.phone }}', '{{ emp.department.id|default:'' }}', '{{ emp.casual_leave_balance }}', '{{ emp.raw_password|default:'' }}', '{{ emp.joining_date|date:'Y-m-d' }}', '{{ emp.is_offsite_employee|yesno:'true,false' }}', '{{ emp.branch.id|default:'' }}', '{% if emp.profile_picture %}{{ emp.profile_picture.url }}{% endif %}', '{% if emp.document %}{{ emp.document.url }}{% endif %}', '{% if emp.document %}{{ emp.document.name }}{% endif %}', '{% url 'employees:download_file' emp.id 'photo' %}', '{% url 'employees:download_file' emp.id 'document' %}')" class="btn btn-primary btn-sm" style="font-weight: 600;">
                 ✏️ Edit Employee
               </button>
               <a href="{% url 'employees:edit' emp.id %}" class="btn btn-outline btn-sm" title="Edit Full Employee Profile">
@@ -1258,14 +1279,67 @@
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div class="form-group">
-            <label class="form-label">Profile Picture</label>
-            <input type="file" name="profile_picture" id="hrModalEmpPic" class="form-input" accept="image/*">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Submitted Document</label>
-            <input type="file" name="document" id="hrModalEmpDoc" class="form-input">
+        <!-- Profile Picture & Submitted Document Management for HR -->
+        <div style="background: #f8fafc; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 14px; margin-top: 6px; margin-bottom: 6px;">
+          <h4 style="margin: 0 0 10px 0; font-size: 13.5px; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+            <span>📁</span> Employee Profile Photo &amp; Submitted Document
+          </h4>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <!-- Profile Picture Box -->
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+              <label class="form-label" style="font-weight: 700; font-size: 12.5px; margin-bottom: 6px; display: block;">
+                📷 Profile Picture
+              </label>
+              
+              <!-- Current Picture Preview & Actions -->
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                <img id="hrModalPicPreview" src="" alt="Profile Photo" style="width: 52px; height: 52px; object-fit: cover; border-radius: 50%; border: 2px solid #3b82f6; display: none;">
+                <div id="hrModalPicPlaceholder" style="width: 52px; height: 52px; border-radius: 50%; background: #e2e8f0; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                  👤
+                </div>
+                <div>
+                  <div id="hrModalPicStatus" style="font-size: 11.5px; font-weight: 600; color: #475569;">No photo uploaded</div>
+                  <div id="hrModalPicActions" style="display: none; gap: 6px; margin-top: 4px;">
+                    <a id="hrModalPicViewBtn" href="" target="_blank" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 10.5px;">👁️ View</a>
+                    <a id="hrModalPicDownloadBtn" href="" class="btn btn-success btn-sm" style="padding: 2px 6px; font-size: 10.5px;">📥 Download</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Upload / Change Photo Input -->
+              <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 11px; color: #64748b; font-weight: 600;">Choose New Photo to Change / Upload:</label>
+                <input type="file" name="profile_picture" id="hrModalEmpPic" class="form-input" accept="image/*" onchange="previewHrPic(this)" style="font-size: 12px; padding: 5px;">
+              </div>
+            </div>
+
+            <!-- Submitted Document Box -->
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px;">
+              <label class="form-label" style="font-weight: 700; font-size: 12.5px; margin-bottom: 6px; display: block;">
+                📄 Submitted Document (ID / Resume / Contract)
+              </label>
+
+              <!-- Current Document Info & Actions -->
+              <div style="margin-bottom: 10px; min-height: 52px; display: flex; flex-direction: column; justify-content: center;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 24px;">📑</span>
+                  <div>
+                    <div id="hrModalDocName" style="font-size: 12px; font-weight: 600; color: #1e293b; word-break: break-all;">No document attached</div>
+                    <div id="hrModalDocActions" style="display: none; gap: 6px; margin-top: 4px;">
+                      <a id="hrModalDocViewBtn" href="" target="_blank" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 10.5px;">👁️ View</a>
+                      <a id="hrModalDocDownloadBtn" href="" class="btn btn-success btn-sm" style="padding: 2px 6px; font-size: 10.5px;">📥 Download</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Upload / Change Document Input -->
+              <div class="form-group" style="margin-bottom: 0;">
+                <label style="font-size: 11px; color: #64748b; font-weight: 600;">Choose New File to Change / Upload (PDF/Image/DOC):</label>
+                <input type="file" name="document" id="hrModalEmpDoc" class="form-input" onchange="previewHrDoc(this)" style="font-size: 12px; padding: 5px;">
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1400,6 +1474,54 @@
     </div>
   </div>
 </div>
+
+<!-- Employee Photo Preview Modal for HR -->
+<div class="modal-overlay" id="empPhotoModal">
+  <div class="modal-dialog" style="max-width: 480px; text-align: center;">
+    <div class="modal-header">
+      <h3 id="empPhotoModalTitle" style="margin: 0; font-size: 16px;">Employee Profile Photo</h3>
+      <button type="button" class="modal-close" onclick="closePhotoModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 20px;">
+      <div style="background: #f8fafc; border: 1px solid var(--gray-200); border-radius: 8px; padding: 12px; margin-bottom: 16px; display: inline-block;">
+        <img id="empPhotoModalImg" src="" alt="Employee Photo" style="max-width: 100%; max-height: 380px; object-fit: contain; border-radius: 6px;">
+      </div>
+      <div style="display: flex; justify-content: center; gap: 10px;">
+        <button type="button" class="btn btn-outline" onclick="closePhotoModal()">Close</button>
+        <a id="empPhotoModalDownload" href="" class="btn btn-success" style="font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+          📥 Download Photo
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Employee Document Preview Modal for HR -->
+<div class="modal-overlay" id="empDocModal">
+  <div class="modal-dialog" style="max-width: 750px; width: 92%;">
+    <div class="modal-header">
+      <h3 id="empDocModalTitle" style="margin: 0; font-size: 16px;">Employee Submitted Document</h3>
+      <button type="button" class="modal-close" onclick="closeDocModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 16px;">
+      <div id="empDocModalContainer" style="background: #f8fafc; border: 1px solid var(--gray-200); border-radius: 8px; min-height: 320px; max-height: 520px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 14px;">
+        <iframe id="empDocModalFrame" src="" style="width: 100%; height: 480px; border: none; display: none;"></iframe>
+        <img id="empDocModalImg" src="" alt="Document Preview" style="max-width: 100%; max-height: 480px; object-fit: contain; display: none;">
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <a id="empDocModalNewTab" href="" target="_blank" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 4px;">
+          ↗️ Open in New Tab
+        </a>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeDocModal()">Close</button>
+          <a id="empDocModalDownload" href="" class="btn btn-success btn-sm" style="font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+            📥 Download Document
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -1498,7 +1620,7 @@
     });
   }
 
-  function openHrEditEmployeeModal(id, code, first, last, email, phone, deptId, leaveBal, password, joiningDate, isOffsite, branchId) {
+  function openHrEditEmployeeModal(id, code, first, last, email, phone, deptId, leaveBal, password, joiningDate, isOffsite, branchId, picUrl, docUrl, docName, dlPicUrl, dlDocUrl) {
     document.getElementById('hrModalEmpId').value = id;
     document.getElementById('hrModalEmpCode').value = code;
     document.getElementById('hrModalEmpFirstName').value = first;
@@ -1520,7 +1642,143 @@
     if (document.getElementById('hrModalEmpBranch')) {
       document.getElementById('hrModalEmpBranch').value = branchId || '';
     }
+
+    // Profile Picture Display & Download
+    const picPrev = document.getElementById('hrModalPicPreview');
+    const picPlh = document.getElementById('hrModalPicPlaceholder');
+    const picStat = document.getElementById('hrModalPicStatus');
+    const picActs = document.getElementById('hrModalPicActions');
+    const picViewBtn = document.getElementById('hrModalPicViewBtn');
+    const picDlBtn = document.getElementById('hrModalPicDownloadBtn');
+
+    if (picPrev && picPlh && picStat && picActs) {
+      if (picUrl && picUrl.trim() !== '') {
+        picPrev.src = picUrl;
+        picPrev.style.display = 'block';
+        picPlh.style.display = 'none';
+        picStat.textContent = 'Current Photo Uploaded ✅';
+        picStat.style.color = '#16a34a';
+        picActs.style.display = 'flex';
+        if (picViewBtn) {
+          picViewBtn.href = picUrl;
+          picViewBtn.onclick = function(e) {
+            e.preventDefault();
+            openPhotoModal(picUrl, code, first + ' ' + last, dlPicUrl);
+          };
+        }
+        if (picDlBtn) picDlBtn.href = dlPicUrl || picUrl;
+      } else {
+        picPrev.src = '';
+        picPrev.style.display = 'none';
+        picPlh.style.display = 'flex';
+        picStat.textContent = 'No photo uploaded yet';
+        picStat.style.color = '#64748b';
+        picActs.style.display = 'none';
+      }
+    }
+
+    // Reset file input
+    const picInput = document.getElementById('hrModalEmpPic');
+    if (picInput) picInput.value = '';
+
+    // Document Display & Download
+    const docNameEl = document.getElementById('hrModalDocName');
+    const docActs = document.getElementById('hrModalDocActions');
+    const docViewBtn = document.getElementById('hrModalDocViewBtn');
+    const docDlBtn = document.getElementById('hrModalDocDownloadBtn');
+
+    if (docNameEl && docActs) {
+      if (docUrl && docUrl.trim() !== '') {
+        const shortName = docName ? docName.split('/').pop() : 'Submitted Document';
+        docNameEl.innerHTML = `<span style="color: #1e40af;">📄 ${shortName}</span> <span style="color: #16a34a; font-size: 11px;">(Uploaded ✅)</span>`;
+        docActs.style.display = 'flex';
+        if (docViewBtn) {
+          docViewBtn.href = docUrl;
+          docViewBtn.onclick = function(e) {
+            e.preventDefault();
+            openDocModal(docUrl, code, first + ' ' + last, dlDocUrl);
+          };
+        }
+        if (docDlBtn) docDlBtn.href = dlDocUrl || docUrl;
+      } else {
+        docNameEl.innerHTML = '<span style="color: #94a3b8; font-style: italic;">No document uploaded yet</span>';
+        docActs.style.display = 'none';
+      }
+    }
+
+    // Reset file input
+    const docInput = document.getElementById('hrModalEmpDoc');
+    if (docInput) docInput.value = '';
+
     document.getElementById('hrEditEmployeeModal').classList.add('active');
+  }
+
+  function previewHrPic(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const picPrev = document.getElementById('hrModalPicPreview');
+        const picPlh = document.getElementById('hrModalPicPlaceholder');
+        const picStat = document.getElementById('hrModalPicStatus');
+        if (picPrev && picPlh && picStat) {
+          picPrev.src = e.target.result;
+          picPrev.style.display = 'block';
+          picPlh.style.display = 'none';
+          picStat.textContent = 'New Photo Selected (Click Save to update) 📷';
+          picStat.style.color = '#2563eb';
+        }
+      }
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function openPhotoModal(url, code, name, dlUrl) {
+    document.getElementById('empPhotoModalImg').src = url;
+    document.getElementById('empPhotoModalTitle').textContent = `Profile Photo: ${code} - ${name}`;
+    document.getElementById('empPhotoModalDownload').href = dlUrl || url;
+    document.getElementById('empPhotoModal').classList.add('active');
+  }
+
+  function closePhotoModal() {
+    document.getElementById('empPhotoModal').classList.remove('active');
+  }
+
+  function openDocModal(url, code, name, dlUrl) {
+    const frame = document.getElementById('empDocModalFrame');
+    const img = document.getElementById('empDocModalImg');
+    const title = document.getElementById('empDocModalTitle');
+    const newTab = document.getElementById('empDocModalNewTab');
+    const dlBtn = document.getElementById('empDocModalDownload');
+
+    if (title) title.textContent = `Document: ${code} - ${name}`;
+    if (newTab) newTab.href = url;
+    if (dlBtn) dlBtn.href = dlUrl || url;
+
+    const isImg = url.match(/\.(jpeg|jpg|gif|png|webp|bmp)(\?.*)?$/i);
+    if (isImg) {
+      if (frame) { frame.src = ''; frame.style.display = 'none'; }
+      if (img) { img.src = url; img.style.display = 'block'; }
+    } else {
+      if (img) { img.src = ''; img.style.display = 'none'; }
+      if (frame) { frame.src = url; frame.style.display = 'block'; }
+    }
+
+    document.getElementById('empDocModal').classList.add('active');
+  }
+
+  function closeDocModal() {
+    const frame = document.getElementById('empDocModalFrame');
+    const img = document.getElementById('empDocModalImg');
+    if (frame) { frame.src = ''; frame.style.display = 'none'; }
+    if (img) { img.src = ''; img.style.display = 'none'; }
+    document.getElementById('empDocModal').classList.remove('active');
+  }
+
+  function previewHrDoc(input) {
+    const docNameEl = document.getElementById('hrModalDocName');
+    if (input.files && input.files[0] && docNameEl) {
+      docNameEl.innerHTML = `<span style="color: #2563eb; font-weight: 600;">Selected: ${input.files[0].name} (Click Save to update) 📄</span>`;
+    }
   }
   function closeHrEditEmployeeModal() {
     document.getElementById('hrEditEmployeeModal').classList.remove('active');

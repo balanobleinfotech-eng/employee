@@ -13,12 +13,12 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application source code
 COPY . /app/
 
-# Ensure entrypoint script is executable
-RUN chmod +x /app/entrypoint.sh
+# Ensure entrypoint script has LF line endings and is executable
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 # Pre-collect static files during build
 RUN python manage.py collectstatic --no-input
 
 EXPOSE 8000
 
-CMD ["/app/entrypoint.sh"]
+CMD ["/bin/sh", "/app/entrypoint.sh"]

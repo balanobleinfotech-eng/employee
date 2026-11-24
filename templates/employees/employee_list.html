@@ -101,7 +101,9 @@
           <td>
             <div style="display: flex; align-items: center; gap: 8px;">
               {% if emp.profile_picture %}
-              <img src="{{ emp.profile_picture.url }}" alt="{{ emp.display_name }}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 50%; border: 1px solid #cbd5e1; flex-shrink: 0;">
+              <a href="{% url 'employees:download_file' emp.id 'photo' %}" title="Download profile photo" style="display: flex; align-items: center;">
+                <img src="{{ emp.profile_picture.url }}" alt="{{ emp.display_name }}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 50%; border: 1px solid #cbd5e1; flex-shrink: 0; cursor: pointer;">
+              </a>
               {% else %}
               <div style="width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; color: #475569; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;">
                 {{ emp.user.username|make_list|first|upper }}
@@ -122,9 +124,14 @@
           </td>
           <td>
             {% if emp.document %}
-            <a href="{{ emp.document.url }}" target="_blank" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 11px; color: #2563eb; border-color: #3b82f6; white-space: nowrap;" title="View Submitted Document">
-              📄 Doc
-            </a>
+            <div style="display: inline-flex; gap: 4px; align-items: center; white-space: nowrap;">
+              <a href="{{ emp.document.url }}" target="_blank" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 11px; color: #2563eb; border-color: #3b82f6;" title="View Submitted Document">
+                📄 View
+              </a>
+              <a href="{% url 'employees:download_file' emp.id 'document' %}" class="btn btn-outline btn-sm" style="padding: 2px 6px; font-size: 11px; color: #059669; border-color: #34d399;" title="Download Document">
+                📥 DL
+              </a>
+            </div>
             {% else %}
             <span style="color: #94a3b8; font-size: 11px;">None</span>
             {% endif %}

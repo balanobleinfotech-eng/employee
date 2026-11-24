@@ -138,18 +138,41 @@ mysql_port = os.getenv('MYSQLPORT') or os.getenv('DB_PORT', '3306')
 use_mysql = os.getenv('USE_MYSQL', 'True').lower() in ('true', '1', 'yes')
 
 if database_url:
-    import dj_database_url
-    DATABASES = {
-        'default': dj_database_url.config(
+    try:
+        import dj_database_url
+        parsed_db = dj_database_url.config(
             default=database_url,
             conn_max_age=600,
             ssl_require=False
         )
-    }
-    if 'mysql' in DATABASES['default'].get('ENGINE', ''):
-        DATABASES['default'].setdefault('OPTIONS', {})
-        DATABASES['default']['OPTIONS'].setdefault('charset', 'utf8mb4')
-        DATABASES['default']['OPTIONS'].setdefault('init_command', "SET sql_mode='STRICT_TRANS_TABLES'")
+        if 'postgresql' in parsed_db.get('ENGINE', ''):
+            try:
+                import psycopg2  # noqa: F401
+            except ImportError:
+                try:
+                    import psycopg  # noqa: F401
+                except ImportError:
+                    parsed_db = None
+        if parsed_db:
+            DATABASES = {'default': parsed_db}
+            if 'mysql' in DATABASES['default'].get('ENGINE', ''):
+                DATABASES['default'].setdefault('OPTIONS', {})
+                DATABASES['default']['OPTIONS'].setdefault('charset', 'utf8mb4')
+                DATABASES['default']['OPTIONS'].setdefault('init_command', "SET sql_mode='STRICT_TRANS_TABLES'")
+        else:
+            DATABASES = {
+                'default': {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME': BASE_DIR / 'database' / 'employee_db.sqlite3',
+                }
+            }
+    except Exception:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'database' / 'employee_db.sqlite3',
+            }
+        }
 elif os.getenv('MYSQLHOST') and os.getenv('MYSQLHOST') not in ('127.0.0.1', 'localhost'):
     DATABASES = {
         'default': {

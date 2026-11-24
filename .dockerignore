@@ -8,7 +8,6 @@ __pycache__/
 .Python
 *.log
 logs/*.log
-database/*.sqlite3
 database/backups/*.sql
 database/backups/*.json
 test_*.sqlite3
