@@ -137,6 +137,19 @@ mysql_port = os.getenv('MYSQLPORT') or os.getenv('DB_PORT', '3306')
 
 use_mysql = os.getenv('USE_MYSQL', 'True').lower() in ('true', '1', 'yes')
 
+def _is_host_reachable(host, port, timeout=0.8):
+    if not host:
+        return False
+    try:
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        res = sock.connect_ex((host, int(port)))
+        sock.close()
+        return res == 0
+    except Exception:
+        return False
+
 if database_url:
     try:
         import dj_database_url
@@ -145,7 +158,14 @@ if database_url:
             conn_max_age=600,
             ssl_require=False
         )
-        if 'postgresql' in parsed_db.get('ENGINE', ''):
+        db_host = parsed_db.get('HOST', '')
+        db_port = parsed_db.get('PORT') or (5432 if 'postgresql' in parsed_db.get('ENGINE', '') else 3306)
+
+        # Verify host connectivity before committing to external DB
+        if db_host and not _is_host_reachable(db_host, db_port):
+            parsed_db = None
+
+        if parsed_db and 'postgresql' in parsed_db.get('ENGINE', ''):
             try:
                 import psycopg2  # noqa: F401
             except ImportError:
@@ -153,6 +173,7 @@ if database_url:
                     import psycopg  # noqa: F401
                 except ImportError:
                     parsed_db = None
+
         if parsed_db:
             DATABASES = {'default': parsed_db}
             if 'mysql' in DATABASES['default'].get('ENGINE', ''):
@@ -174,35 +195,31 @@ if database_url:
             }
         }
 elif os.getenv('MYSQLHOST') and os.getenv('MYSQLHOST') not in ('127.0.0.1', 'localhost'):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': mysql_db,
-            'USER': mysql_user,
-            'PASSWORD': mysql_password,
-            'HOST': mysql_host,
-            'PORT': mysql_port,
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+    if _is_host_reachable(mysql_host, mysql_port):
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.mysql',
+                'NAME': mysql_db,
+                'USER': mysql_user,
+                'PASSWORD': mysql_password,
+                'HOST': mysql_host,
+                'PORT': mysql_port,
+                'OPTIONS': {
+                    'charset': 'utf8mb4',
+                    'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                }
             }
         }
-    }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'database' / 'employee_db.sqlite3',
+            }
+        }
 elif use_mysql:
     # Test if MySQL port is accessible to gracefully fallback to SQLite if offline
-    mysql_accessible = True
-    try:
-        import socket
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(0.6)
-        result = sock.connect_ex((mysql_host, int(mysql_port)))
-        sock.close()
-        if result != 0:
-            mysql_accessible = False
-    except Exception:
-        mysql_accessible = False
-
-    if mysql_accessible:
+    if _is_host_reachable(mysql_host, mysql_port):
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.mysql',
