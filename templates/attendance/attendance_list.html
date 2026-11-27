@@ -61,6 +61,11 @@
               <span style="color: var(--success); font-weight: 700; text-decoration: underline dotted;">{{ a.in_time|time:"H:i:s" }}</span>
               <span style="font-size: 11px;">📍</span>
             </button>
+            {% if a.effective_in_time and a.effective_in_time != a.in_time %}
+            <div style="font-size: 10.5px; color: #2563eb; font-weight: 700; margin-top: 2px;">
+              ⏱️ Start: {{ a.effective_in_time|time:"H:i" }} (Perm)
+            </div>
+            {% endif %}
             {% elif a.status == 'Missed Punch-In' %}
             <span style="color: #dc2626; font-weight: 700;">Missing</span>
             {% else %}
@@ -76,6 +81,11 @@
               <span style="color: var(--danger); font-weight: 700; text-decoration: underline dotted;">{{ a.out_time|time:"H:i:s" }}</span>
               <span style="font-size: 11px;">📍</span>
             </button>
+            {% if a.effective_out_time and a.effective_out_time != a.out_time %}
+            <div style="font-size: 10.5px; color: #2563eb; font-weight: 700; margin-top: 2px;">
+              ⏱️ End: {{ a.effective_out_time|time:"H:i" }} (Perm)
+            </div>
+            {% endif %}
             {% elif a.in_time %}
             <span style="color: #dc2626; font-weight: 700; background: #fee2e2; padding: 2px 8px; border-radius: 4px; border: 1px solid #ef4444;" title="Punch-out missing. Contact HR for manual update.">Missing</span>
             {% else %}

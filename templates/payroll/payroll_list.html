@@ -2,105 +2,541 @@
 {% block page_title %}Payroll & Compensation Management{% endblock %}
 
 {% block content %}
-<div class="metrics-grid">
-  <div class="metric-card">
+<!-- Top Metrics Grid: Summary of Monthly Payroll -->
+<div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+  <!-- Total Employees in Ledger -->
+  <div class="metric-card" style="background: #ffffff; border-radius: 14px; border: 1px solid var(--gray-200); padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center;">
     <div class="metric-info">
-      <h4>Paid Compensation</h4>
-      <div class="metric-value" style="color: var(--success);">₹{{ total_disbursed|floatformat:2 }}</div>
+      <h4 style="font-size: 13px; color: #64748b; font-weight: 600; margin: 0 0 4px 0; text-transform: uppercase;">Total Employees</h4>
+      <div class="metric-value" style="font-size: 26px; font-weight: 800; color: #0f172a;">{{ total_employees }}</div>
+      <small style="font-size: 11.5px; color: #64748b;">Month: {{ selected_month }}/{{ selected_year }}</small>
     </div>
-    <div class="metric-icon-box icon-green">💵</div>
+    <div class="metric-icon-box" style="width: 48px; height: 48px; border-radius: 12px; background: #e0f2fe; color: #0284c7; font-size: 24px; display: flex; align-items: center; justify-content: center;">👥</div>
   </div>
 
-  <div class="metric-card">
+  <!-- Total Payable Salary -->
+  <div class="metric-card" style="background: #ffffff; border-radius: 14px; border: 1px solid var(--gray-200); padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center;">
     <div class="metric-info">
-      <h4>Pending Disbursement</h4>
-      <div class="metric-value" style="color: var(--warning);">₹{{ total_pending|floatformat:2 }}</div>
+      <h4 style="font-size: 13px; color: #64748b; font-weight: 600; margin: 0 0 4px 0; text-transform: uppercase;">Total Payable</h4>
+      <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #2563eb;">₹{{ total_payable|floatformat:2 }}</div>
+      <small style="font-size: 11.5px; color: #64748b;">Gross minus deductions</small>
     </div>
-    <div class="metric-icon-box icon-yellow">⏳</div>
+    <div class="metric-icon-box" style="width: 48px; height: 48px; border-radius: 12px; background: #eff6ff; color: #2563eb; font-size: 24px; display: flex; align-items: center; justify-content: center;">💼</div>
+  </div>
+
+  <!-- Total Paid Salary -->
+  <div class="metric-card" style="background: #ffffff; border-radius: 14px; border: 1px solid var(--gray-200); padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center;">
+    <div class="metric-info">
+      <h4 style="font-size: 13px; color: #64748b; font-weight: 600; margin: 0 0 4px 0; text-transform: uppercase;">Total Paid</h4>
+      <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #16a34a;">₹{{ total_disbursed|floatformat:2 }}</div>
+      <small style="font-size: 11.5px; color: #16a34a; font-weight: 600;">Disbursed to date</small>
+    </div>
+    <div class="metric-icon-box" style="width: 48px; height: 48px; border-radius: 12px; background: #dcfce7; color: #16a34a; font-size: 24px; display: flex; align-items: center; justify-content: center;">✅</div>
+  </div>
+
+  <!-- Pending Salary -->
+  <div class="metric-card" style="background: #ffffff; border-radius: 14px; border: 1px solid var(--gray-200); padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center;">
+    <div class="metric-info">
+      <h4 style="font-size: 13px; color: #64748b; font-weight: 600; margin: 0 0 4px 0; text-transform: uppercase;">Pending Balance</h4>
+      <div class="metric-value" style="font-size: 24px; font-weight: 800; color: #dc2626;">₹{{ total_pending|floatformat:2 }}</div>
+      <small style="font-size: 11.5px; color: #dc2626; font-weight: 600;">Awaiting clearance</small>
+    </div>
+    <div class="metric-icon-box" style="width: 48px; height: 48px; border-radius: 12px; background: #fee2e2; color: #dc2626; font-size: 24px; display: flex; align-items: center; justify-content: center;">⏳</div>
   </div>
 </div>
 
-<div class="panel">
-  <div class="panel-header">
-    <h3>Payroll Ledger: {{ selected_month }}/{{ selected_year }}</h3>
-    {% if is_management %}
-    <form method="POST" action="{% url 'payroll:generate' %}" style="display: flex; gap: 8px;">
-      {% csrf_token %}
-      <input type="hidden" name="year" value="{{ selected_year }}">
-      <input type="hidden" name="month" value="{{ selected_month }}">
-      <button type="submit" class="btn btn-primary btn-sm">⚡ Process {{ selected_month }}/{{ selected_year }} Payroll</button>
-    </form>
-    {% endif %}
+<!-- Main Payroll Ledger Panel -->
+<div class="panel" style="background: #ffffff; border-radius: 16px; border: 1px solid var(--gray-200); box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin-bottom: 30px;">
+  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; padding: 20px 24px; border-bottom: 1px solid var(--gray-200);">
+    <div>
+      <h3 style="margin: 0; font-size: 19px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+        <span>💰</span> Monthly Payroll Ledger &amp; Compensation Hub
+      </h3>
+      <small style="color: var(--gray-600); font-size: 13px;">
+        Full attendance evaluation: 9h Full Day, 4.5h Half Day, 2h Permission (0 deduction), Approved Leave, Overtime &amp; Advance Salary Management
+      </small>
+    </div>
+
+    <!-- Management Action Buttons -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+      {% if is_management %}
+      <!-- Advance Salary Modal Trigger -->
+      <button type="button" onclick="openAdvanceModal()" class="btn btn-outline btn-sm" style="font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border-color: #8b5cf6; color: #7c3aed;">
+        <span>💸</span> Advance Salary ({{ advance_salaries|length }})
+      </button>
+
+      <!-- Export Excel -->
+      <a href="{% url 'payroll:export' 'excel' %}?year={{ selected_year }}&month={{ selected_month }}&employee_id={{ selected_emp_id }}&status={{ selected_status }}" class="btn btn-success btn-sm" style="font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+        <span>📊</span> Export Excel
+      </a>
+
+      <!-- Export PDF -->
+      <a href="{% url 'payroll:export' 'pdf' %}?year={{ selected_year }}&month={{ selected_month }}&employee_id={{ selected_emp_id }}&status={{ selected_status }}" class="btn btn-primary btn-sm" style="font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+        <span>📄</span> Export PDF
+      </a>
+
+      <!-- Re-calculate / Process Payroll -->
+      <form method="POST" action="{% url 'payroll:generate' %}" style="margin: 0;">
+        {% csrf_token %}
+        <input type="hidden" name="year" value="{{ selected_year }}">
+        <input type="hidden" name="month" value="{{ selected_month }}">
+        <button type="submit" class="btn btn-primary btn-sm" style="font-weight: 700; background: #2563eb; display: inline-flex; align-items: center; gap: 6px;">
+          <span>⚡</span> Process {{ selected_month }}/{{ selected_year }} Payroll
+        </button>
+      </form>
+      {% endif %}
+    </div>
   </div>
 
-  <div class="panel-body" style="padding-bottom: 0;">
-    <form method="GET" style="display: flex; gap: 12px; margin-bottom: 20px;">
-      <select name="month" class="form-select" style="max-width: 150px;">
-        {% for m in "1 2 3 4 5 6 7 8 9 10 11 12"|make_list %}
-        {% endfor %}
-        <option value="1" {% if selected_month == 1 %}selected{% endif %}>January</option>
-        <option value="2" {% if selected_month == 2 %}selected{% endif %}>February</option>
-        <option value="3" {% if selected_month == 3 %}selected{% endif %}>March</option>
-        <option value="4" {% if selected_month == 4 %}selected{% endif %}>April</option>
-        <option value="5" {% if selected_month == 5 %}selected{% endif %}>May</option>
-        <option value="6" {% if selected_month == 6 %}selected{% endif %}>June</option>
-        <option value="7" {% if selected_month == 7 %}selected{% endif %}>July</option>
-        <option value="8" {% if selected_month == 8 %}selected{% endif %}>August</option>
-        <option value="9" {% if selected_month == 9 %}selected{% endif %}>September</option>
-        <option value="10" {% if selected_month == 10 %}selected{% endif %}>October</option>
-        <option value="11" {% if selected_month == 11 %}selected{% endif %}>November</option>
-        <option value="12" {% if selected_month == 12 %}selected{% endif %}>December</option>
-      </select>
-      <input type="number" name="year" value="{{ selected_year }}" class="form-input" style="max-width: 120px;">
-      <button type="submit" class="btn btn-primary">Filter</button>
+  <!-- Search & Filter Bar -->
+  <div class="panel-body" style="padding: 18px 24px 10px 24px; background: #f8fafc; border-bottom: 1px solid var(--gray-200);">
+    <form method="GET" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+      {% if is_management %}
+      <!-- Employee Filter -->
+      <div style="flex: 1; min-width: 200px;">
+        <label style="font-size: 11.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">👤 Filter Employee</label>
+        <select name="employee_id" class="form-select" style="font-size: 13px;">
+          <option value="">-- All Active Employees --</option>
+          {% for emp in all_employees %}
+          <option value="{{ emp.id }}" {% if selected_emp_id == emp.id|stringformat:"s" %}selected{% endif %}>
+            {{ emp.employee_code }} - {{ emp.display_name }} ({{ emp.department.name|default:"General" }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+      <!-- Month Filter -->
+      <div style="width: 140px;">
+        <label style="font-size: 11.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">📅 Month</label>
+        <select name="month" class="form-select" style="font-size: 13px;">
+          <option value="1" {% if selected_month == 1 %}selected{% endif %}>January</option>
+          <option value="2" {% if selected_month == 2 %}selected{% endif %}>February</option>
+          <option value="3" {% if selected_month == 3 %}selected{% endif %}>March</option>
+          <option value="4" {% if selected_month == 4 %}selected{% endif %}>April</option>
+          <option value="5" {% if selected_month == 5 %}selected{% endif %}>May</option>
+          <option value="6" {% if selected_month == 6 %}selected{% endif %}>June</option>
+          <option value="7" {% if selected_month == 7 %}selected{% endif %}>July</option>
+          <option value="8" {% if selected_month == 8 %}selected{% endif %}>August</option>
+          <option value="9" {% if selected_month == 9 %}selected{% endif %}>September</option>
+          <option value="10" {% if selected_month == 10 %}selected{% endif %}>October</option>
+          <option value="11" {% if selected_month == 11 %}selected{% endif %}>November</option>
+          <option value="12" {% if selected_month == 12 %}selected{% endif %}>December</option>
+        </select>
+      </div>
+
+      <!-- Year Filter -->
+      <div style="width: 110px;">
+        <label style="font-size: 11.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">🗓️ Year</label>
+        <input type="number" name="year" value="{{ selected_year }}" class="form-input" style="font-size: 13px;">
+      </div>
+
+      <!-- Payment Status Filter -->
+      <div style="width: 150px;">
+        <label style="font-size: 11.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">💳 Status</label>
+        <select name="status" class="form-select" style="font-size: 13px;">
+          <option value="">-- All Statuses --</option>
+          <option value="Paid" {% if selected_status == 'Paid' %}selected{% endif %}>Paid</option>
+          <option value="Partially Paid" {% if selected_status == 'Partially Paid' %}selected{% endif %}>Partially Paid</option>
+          <option value="Unpaid" {% if selected_status == 'Unpaid' %}selected{% endif %}>Unpaid</option>
+          <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>Pending</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 6px;">
+        <button type="submit" class="btn btn-primary" style="font-weight: 600; padding: 7px 16px; font-size: 13px;">🔍 Filter</button>
+        <a href="{% url 'payroll:list' %}" class="btn btn-outline" style="font-weight: 600; padding: 7px 14px; font-size: 13px;">Reset</a>
+      </div>
     </form>
   </div>
 
-  <div class="table-responsive">
-    <table class="data-table">
-      <thead>
+  <!-- Detailed Employee-Wise Table -->
+  <div class="table-responsive" style="overflow-x: auto;">
+    <table class="data-table" style="width: 100%; border-collapse: collapse; min-width: 1100px;">
+      <thead style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
         <tr>
-          <th>Staff Member</th>
-          <th>Department</th>
-          <th>Basic Salary</th>
-          <th>Allowances</th>
-          <th>Deductions</th>
-          <th>Net Payout</th>
-          <th>Status</th>
-          <th>Actions</th>
+          <th style="padding: 12px 14px; font-size: 12px; font-weight: 700; color: #334155; text-align: left;">Staff Member</th>
+          <th style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #334155; text-align: left;">Work Type &amp; Branch</th>
+          <th style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #334155; text-align: center;">Attendance Breakdown</th>
+          <th style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #334155; text-align: right;">Gross Pay (₹)</th>
+          <th style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #334155; text-align: right;">Deductions (₹)</th>
+          <th style="padding: 12px 12px; font-size: 12px; font-weight: 800; color: #0f172a; text-align: right;">Net Payout (₹)</th>
+          <th style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #334155; text-align: center;">Payment Details</th>
+          <th style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #334155; text-align: center;">Status</th>
+          <th style="padding: 12px 14px; font-size: 12px; font-weight: 700; color: #334155; text-align: center;">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for p in records %}
-        <tr>
-          <td>
-            <b>{{ p.employee.employee_code }}</b><br/>
-            <small>{{ p.employee.display_name }}</small>
+        <tr style="border-bottom: 1px solid #e2e8f0; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+          <!-- Staff Member -->
+          <td style="padding: 12px 14px; vertical-align: middle;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              {% if p.employee.profile_picture %}
+              <img src="{{ p.employee.profile_picture.url }}" alt="{{ p.employee.display_name }}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid #cbd5e1; flex-shrink: 0;">
+              {% else %}
+              <div style="width: 36px; height: 36px; border-radius: 50%; background: #e0f2fe; color: #0284c7; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0;">
+                {{ p.employee.user.first_name|default:p.employee.user.username|make_list|first|upper }}
+              </div>
+              {% endif %}
+              <div>
+                <b style="color: #0f172a; font-size: 13.5px;">{{ p.employee.display_name }}</b>
+                <div style="font-size: 11.5px; color: #64748b;">
+                  <code>{{ p.employee.employee_code }}</code> • {{ p.employee.designation.title|default:p.employee.get_role_display }}
+                </div>
+              </div>
+            </div>
           </td>
-          <td>{{ p.employee.department.name|default:"-" }}</td>
-          <td>₹{{ p.basic_salary }}</td>
-          <td>+₹{{ p.allowances }}</td>
-          <td>-₹{{ p.deductions }}</td>
-          <td><b style="color: var(--primary); font-size: 15px;">₹{{ p.net_salary }}</b></td>
-          <td>
-            <span class="badge {% if p.status == 'Paid' %}badge-success{% else %}badge-warning{% endif %}">
-              {{ p.status }}
-            </span>
+
+          <!-- Work Type & Branch -->
+          <td style="padding: 12px 10px; vertical-align: middle;">
+            <div style="font-size: 12px; color: #334155;">
+              {% if p.employee.is_offsite_employee %}
+              <span class="badge" style="background: #f3e8ff; color: #7c3aed; font-size: 10.5px; font-weight: 700; border-radius: 4px; padding: 2px 6px;">
+                🌍 Offsite Field
+              </span>
+              {% else %}
+              <span class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 10.5px; font-weight: 700; border-radius: 4px; padding: 2px 6px;">
+                🏢 Onsite Office
+              </span>
+              {% endif %}
+              <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
+                {{ p.employee.branch.name|default:"Head Office"|truncatechars:22 }}
+              </div>
+            </div>
           </td>
-          <td>
-            <div style="display: flex; gap: 6px;">
-              <a href="{% url 'payroll:payslip' p.id %}" class="btn btn-outline btn-sm">Slip 📄</a>
-              {% if is_management and p.status != 'Paid' %}
-              <a href="{% url 'payroll:mark_paid' p.id %}" class="btn btn-success btn-sm" onclick="return confirm('Confirm payout of ₹{{ p.net_salary }}?');">Mark Paid</a>
+
+          <!-- Attendance Breakdown -->
+          <td style="padding: 12px 10px; vertical-align: middle; text-align: center;">
+            <div style="display: inline-flex; gap: 8px; font-size: 11.5px; flex-wrap: wrap; justify-content: center;">
+              <span title="Present Days (Full Days + 0.5 Half Days)" style="color: #16a34a; font-weight: 700; background: #dcfce7; padding: 2px 6px; border-radius: 4px;">
+                P: {{ p.present_days|floatformat:1 }}d
+              </span>
+              <span title="Absent Days (Unexcused)" style="color: #dc2626; font-weight: 700; background: #fee2e2; padding: 2px 6px; border-radius: 4px;">
+                A: {{ p.absent_days|floatformat:1 }}d
+              </span>
+              <span title="Paid Leaves &amp; Office Holidays" style="color: #2563eb; font-weight: 600; background: #eff6ff; padding: 2px 6px; border-radius: 4px;">
+                PL: {{ p.paid_leaves|floatformat:0 }}d
+              </span>
+              {% if p.unpaid_leaves > 0 %}
+              <span title="Unpaid Leaves / LWP" style="color: #b91c1c; font-weight: 700; background: #fef2f2; padding: 2px 6px; border-radius: 4px;">
+                UL: {{ p.unpaid_leaves|floatformat:0 }}d
+              </span>
+              {% endif %}
+              {% if p.permission_hours > 0 %}
+              <span title="Approved Permission Hours (Full Pay, No Salary Cut)" style="color: #7c3aed; font-weight: 700; background: #f3e8ff; padding: 2px 6px; border-radius: 4px;">
+                ⏱️ Perm: {{ p.permission_hours|floatformat:1 }}h
+              </span>
+              {% endif %}
+              {% if p.overtime_hours > 0 %}
+              <span title="Overtime Beyond 9h" style="color: #0284c7; font-weight: 700; background: #e0f2fe; padding: 2px 6px; border-radius: 4px;">
+                ⚡ OT: {{ p.overtime_hours|floatformat:1 }}h
+              </span>
+              {% endif %}
+            </div>
+          </td>
+
+          <!-- Gross Pay -->
+          <td style="padding: 12px 10px; vertical-align: middle; text-align: right; font-size: 13px;">
+            <div style="font-weight: 600; color: #0f172a;">₹{{ p.basic_salary|floatformat:2 }}</div>
+            {% if p.allowances > 0 %}
+            <small style="color: #16a34a; font-size: 11px;">+₹{{ p.allowances|floatformat:2 }} allow</small>
+            {% endif %}
+            {% if p.overtime_amount > 0 %}
+            <small style="color: #0284c7; font-size: 11px; display: block;">+₹{{ p.overtime_amount|floatformat:2 }} OT</small>
+            {% endif %}
+          </td>
+
+          <!-- Deductions -->
+          <td style="padding: 12px 10px; vertical-align: middle; text-align: right; font-size: 13px;">
+            <div style="font-weight: 600; color: #dc2626;">-₹{{ p.deductions|floatformat:2 }}</div>
+            {% if p.advance_salary_deduction > 0 %}
+            <small style="color: #7c3aed; font-size: 11px; display: block;">(Adv: -₹{{ p.advance_salary_deduction|floatformat:2 }})</small>
+            {% endif %}
+          </td>
+
+          <!-- Net Payout -->
+          <td style="padding: 12px 12px; vertical-align: middle; text-align: right;">
+            <div style="font-size: 15px; font-weight: 800; color: #2563eb;">₹{{ p.net_salary|floatformat:2 }}</div>
+            {% if p.paid_amount > 0 and p.status != 'Paid' %}
+            <small style="color: #16a34a; font-size: 11px;">Paid: ₹{{ p.paid_amount|floatformat:2 }}</small>
+            {% endif %}
+          </td>
+
+          <!-- Payment Details -->
+          <td style="padding: 12px 10px; vertical-align: middle; text-align: center; font-size: 12px; color: #475569;">
+            {% if p.payment_date %}
+            <div style="font-weight: 600; color: #0f172a;">{{ p.payment_date|date:"M d, Y" }}</div>
+            <small style="color: #64748b; font-size: 11px;">{{ p.payment_mode|default:"Bank Transfer" }}</small>
+            {% else %}
+            <span style="color: #94a3b8; font-size: 11.5px; font-style: italic;">Not scheduled</span>
+            {% endif %}
+          </td>
+
+          <!-- Status Badge -->
+          <td style="padding: 12px 10px; vertical-align: middle; text-align: center;">
+            {% if p.status == 'Paid' %}
+            <span class="badge badge-success" style="font-weight: 700; font-size: 11.5px; padding: 4px 8px;">✅ Paid</span>
+            {% elif p.status == 'Partially Paid' %}
+            <span class="badge" style="background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 11.5px; padding: 4px 8px;">🔵 Partial</span>
+            {% elif p.status == 'Unpaid' %}
+            <span class="badge" style="background: #fee2e2; color: #dc2626; font-weight: 700; font-size: 11.5px; padding: 4px 8px;">❌ Unpaid</span>
+            {% else %}
+            <span class="badge badge-warning" style="font-weight: 700; font-size: 11.5px; padding: 4px 8px;">⏳ Pending</span>
+            {% endif %}
+          </td>
+
+          <!-- Actions -->
+          <td style="padding: 12px 14px; vertical-align: middle; text-align: center;">
+            <div style="display: inline-flex; gap: 6px; align-items: center; white-space: nowrap;">
+              <!-- Payslip View -->
+              <a href="{% url 'payroll:payslip' p.id %}" class="btn btn-outline btn-sm" style="padding: 4px 8px; font-size: 11.5px; font-weight: 600;" title="View &amp; Print Payslip">
+                📄 Slip
+              </a>
+
+              {% if is_management %}
+              <!-- Update Payment Modal Trigger -->
+              <button type="button" onclick="openPaymentModal('{{ p.id }}', '{{ p.employee.display_name }}', '{{ p.net_salary }}', '{{ p.paid_amount }}', '{{ p.status }}', '{{ p.payment_date|date:'Y-m-d'|default:'' }}', '{{ p.payment_mode|default:'Bank Transfer' }}')" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size: 11.5px; font-weight: 600; background: #4f46e5; border-color: #4338ca;" title="Update Payment Status &amp; Mode">
+                💳 Update
+              </button>
+
+              {% if p.status != 'Paid' %}
+              <a href="{% url 'payroll:mark_paid' p.id %}" class="btn btn-success btn-sm" style="padding: 4px 8px; font-size: 11.5px; font-weight: 600;" onclick="return confirm('Confirm mark full net payout of ₹{{ p.net_salary }} as Paid for {{ p.employee.display_name }}?');" title="Quick Mark as Fully Paid">
+                ✓
+              </a>
+              {% endif %}
               {% endif %}
             </div>
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 24px;">No payroll records found for this period. Click 'Process Payroll' above.</td></tr>
+        <tr>
+          <td colspan="9" style="text-align: center; color: #94a3b8; padding: 40px 20px;">
+            <div style="font-size: 32px; margin-bottom: 8px;">📋</div>
+            <h4 style="margin: 0 0 6px 0; color: #334155;">No Payroll Records Found for {{ selected_month }}/{{ selected_year }}</h4>
+            <p style="margin: 0 0 14px 0; font-size: 13px; color: #64748b;">Process payroll for this billing month to calculate employee salaries from attendance, approved permissions, and leave.</p>
+            {% if is_management %}
+            <form method="POST" action="{% url 'payroll:generate' %}" style="display: inline-block;">
+              {% csrf_token %}
+              <input type="hidden" name="year" value="{{ selected_year }}">
+              <input type="hidden" name="month" value="{{ selected_month }}">
+              <button type="submit" class="btn btn-primary btn-sm">⚡ Process {{ selected_month }}/{{ selected_year }} Payroll Now</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
+<!-- ================= MODAL: UPDATE PAYMENT STATUS & MODE ================= -->
+<div class="modal-overlay" id="payrollPaymentModal">
+  <div class="modal-card" style="max-width: 480px; width: 92%;">
+    <div class="modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 20px;">
+      <h3 style="margin: 0; font-size: 17px; font-weight: 800; color: #0f172a;">💳 Update Salary Payment</h3>
+      <button type="button" class="modal-close" onclick="closePaymentModal()">&times;</button>
+    </div>
+    <form method="POST" id="payrollPaymentForm" action="">
+      {% csrf_token %}
+      <div class="modal-body" style="padding: 20px;">
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
+          <div style="font-size: 12px; color: #64748b;">Staff Member:</div>
+          <b id="payModalEmpName" style="font-size: 15px; color: #0f172a;">Employee Name</b>
+          <div style="display: flex; justify-content: space-between; margin-top: 6px; font-size: 13px;">
+            <span>Net Payable: <b id="payModalNet" style="color: #2563eb;">₹0.00</b></span>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 700; font-size: 12.5px;">Payment Status</label>
+          <select name="status" id="payModalStatus" class="form-select" required>
+            <option value="Paid">Paid (Full Settlement)</option>
+            <option value="Partially Paid">Partially Paid</option>
+            <option value="Unpaid">Unpaid</option>
+            <option value="Pending">Pending Clearance</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 700; font-size: 12.5px;">Paid Amount (₹)</label>
+          <input type="number" step="0.01" name="paid_amount" id="payModalPaidAmount" class="form-input" placeholder="Enter amount paid...">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-weight: 700; font-size: 12.5px;">Payment Mode</label>
+          <select name="payment_mode" id="payModalMode" class="form-select">
+            <option value="Bank Transfer">Bank Transfer (NEFT/RTGS/IMPS)</option>
+            <option value="UPI">UPI Payment</option>
+            <option value="Cash">Cash</option>
+            <option value="Cheque">Company Cheque</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" style="font-weight: 700; font-size: 12.5px;">Payment Clearance Date</label>
+          <input type="date" name="payment_date" id="payModalDate" class="form-input">
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 14px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn btn-outline" onclick="closePaymentModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" style="background: #2563eb; font-weight: 700;">Save Payment Details</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL: ADVANCE SALARY MANAGEMENT ================= -->
+<div class="modal-overlay" id="advanceSalaryModal">
+  <div class="modal-card" style="max-width: 650px; width: 92%;">
+    <div class="modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 17px; font-weight: 800; color: #0f172a;">💸 Advance Salary Management</h3>
+      <button type="button" class="modal-close" onclick="closeAdvanceModal()">&times;</button>
+    </div>
+
+    <div class="modal-body" style="padding: 20px; max-height: 70vh; overflow-y: auto;">
+      <!-- Request New Advance Form -->
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: #1e293b;">Request / Record Advance Salary</h4>
+        <form method="POST" action="{% url 'payroll:advance_salary' %}">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="request_advance">
+
+          {% if is_management %}
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" style="font-weight: 600; font-size: 12px;">Employee</label>
+            <select name="employee_id" class="form-select" required>
+              <option value="" disabled selected>-- Select Target Employee --</option>
+              {% for emp in all_employees %}
+              <option value="{{ emp.id }}">{{ emp.employee_code }} - {{ emp.display_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <label class="form-label" style="font-weight: 600; font-size: 12px;">Advance Amount (₹)</label>
+              <input type="number" step="0.01" name="amount" class="form-input" placeholder="e.g. 5000" required>
+            </div>
+            <div>
+              <label class="form-label" style="font-weight: 600; font-size: 12px;">Deduct in Month / Year</label>
+              <div style="display: flex; gap: 6px;">
+                <select name="deduct_month" class="form-select">
+                  {% for m in "1 2 3 4 5 6 7 8 9 10 11 12"|make_list %}
+                  {% endfor %}
+                  <option value="1" {% if selected_month == 1 %}selected{% endif %}>Jan</option>
+                  <option value="2" {% if selected_month == 2 %}selected{% endif %}>Feb</option>
+                  <option value="3" {% if selected_month == 3 %}selected{% endif %}>Mar</option>
+                  <option value="4" {% if selected_month == 4 %}selected{% endif %}>Apr</option>
+                  <option value="5" {% if selected_month == 5 %}selected{% endif %}>May</option>
+                  <option value="6" {% if selected_month == 6 %}selected{% endif %}>Jun</option>
+                  <option value="7" {% if selected_month == 7 %}selected{% endif %}>Jul</option>
+                  <option value="8" {% if selected_month == 8 %}selected{% endif %}>Aug</option>
+                  <option value="9" {% if selected_month == 9 %}selected{% endif %}>Sep</option>
+                  <option value="10" {% if selected_month == 10 %}selected{% endif %}>Oct</option>
+                  <option value="11" {% if selected_month == 11 %}selected{% endif %}>Nov</option>
+                  <option value="12" {% if selected_month == 12 %}selected{% endif %}>Dec</option>
+                </select>
+                <input type="number" name="deduct_year" value="{{ selected_year }}" class="form-input" style="width: 80px;">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" style="font-weight: 600; font-size: 12px;">Reason / Purpose of Advance</label>
+            <input type="text" name="reason" class="form-input" placeholder="e.g. Medical emergency, urgent family expense..." required>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm" style="font-weight: 700;">Submit Advance Request</button>
+        </form>
+      </div>
+
+      <!-- Advance Salary Requests List -->
+      <h4 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: #1e293b;">Recent Advance Salary Records</h4>
+      <div style="overflow-x: auto;">
+        <table class="data-table" style="width: 100%; font-size: 12px;">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Amount</th>
+              <th>Deduct In</th>
+              <th>Status</th>
+              {% if is_management %}<th>Action</th>{% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for adv in advance_salaries %}
+            <tr>
+              <td><b>{{ adv.employee.employee_code }}</b><br><small>{{ adv.employee.display_name }}</small></td>
+              <td><b style="color: #7c3aed;">₹{{ adv.amount|floatformat:2 }}</b></td>
+              <td>{{ adv.deduct_in_month }}/{{ adv.deduct_in_year }}</td>
+              <td>
+                <span class="badge {% if adv.status == 'Approved' %}badge-success{% elif adv.status == 'Deducted' %}badge-gray{% elif adv.status == 'Rejected' %}badge-danger{% else %}badge-warning{% endif %}">
+                  {{ adv.status }}
+                </span>
+              </td>
+              {% if is_management %}
+              <td>
+                {% if adv.status == 'Pending' %}
+                <div style="display: flex; gap: 4px;">
+                  <form method="POST" action="{% url 'payroll:advance_salary' %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve_advance">
+                    <input type="hidden" name="advance_id" value="{{ adv.id }}">
+                    <button type="submit" class="btn btn-success btn-sm" style="padding: 2px 6px; font-size: 11px;">✓</button>
+                  </form>
+                  <form method="POST" action="{% url 'payroll:advance_salary' %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="reject_advance">
+                    <input type="hidden" name="advance_id" value="{{ adv.id }}">
+                    <button type="submit" class="btn btn-danger btn-sm" style="padding: 2px 6px; font-size: 11px;">✕</button>
+                  </form>
+                </div>
+                {% else %}
+                <span style="color: #94a3b8;">-</span>
+                {% endif %}
+              </td>
+              {% endif %}
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align: center; color: #94a3b8; padding: 16px;">No advance salary records recorded.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="closeAdvanceModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openPaymentModal(id, name, net, paid, status, payDate, mode) {
+    document.getElementById('payrollPaymentForm').action = '/payroll/' + id + '/update-payment/';
+    document.getElementById('payModalEmpName').textContent = name;
+    document.getElementById('payModalNet').textContent = '₹' + parseFloat(net).toFixed(2);
+    document.getElementById('payModalStatus').value = status || 'Paid';
+    document.getElementById('payModalPaidAmount').value = paid ? parseFloat(paid) : parseFloat(net);
+    document.getElementById('payModalMode').value = mode || 'Bank Transfer';
+    document.getElementById('payModalDate').value = payDate || new Date().toISOString().split('T')[0];
+    document.getElementById('payrollPaymentModal').classList.add('active');
+  }
+
+  function closePaymentModal() {
+    document.getElementById('payrollPaymentModal').classList.remove('active');
+  }
+
+  function openAdvanceModal() {
+    document.getElementById('advanceSalaryModal').classList.add('active');
+  }
+
+  function closeAdvanceModal() {
+    document.getElementById('advanceSalaryModal').classList.remove('active');
+  }
+</script>
 {% endblock %}

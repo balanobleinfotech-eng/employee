@@ -1,0 +1,554 @@
+[
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$720000$pnmSjqzMtAHFtDB2NrCmpN$4vSmIPrGCR0+ccydvGNVNmVXX0ftK6HT3kMTMk8ZEDA=",
+    "last_login": "2026-11-23T12:48:14.587Z",
+    "is_superuser": true,
+    "username": "NETCOM",
+    "first_name": "NETCOM",
+    "last_name": "Administrator",
+    "email": "admin@ncpli.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-10-12T07:31:25.516Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$720000$IOfXUKv0BOCeP2biOe17WE$DKfBeMMl9LXB9DmxV/He0KqAGppY56CMvn62/Vsk/xU=",
+    "last_login": "2026-11-10T06:29:26.953Z",
+    "is_superuser": false,
+    "username": "hr",
+    "first_name": "HR",
+    "last_name": "Manager",
+    "email": "hr@netcom.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-10-12T07:31:25.793Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$720000$o49qgRgSoFq0KBplL3mv9n$twqAW7Jqr40Cd+wcTib+XP+I9Uz1XtPFzd4HDLChDaU=",
+    "last_login": "2026-10-12T11:10:44.926Z",
+    "is_superuser": false,
+    "username": "emp1",
+    "first_name": "Goutham",
+    "last_name": "",
+    "email": "goutham@netcom.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-10-12T11:10:36.029Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "fields": {
+    "password": "pbkdf2_sha256$720000$ZghZCLBZO25OYIBPEChgxY$KeXYpUg1jQ1n9XtZcsOwwD4YNJu3XwrwVO6Kvw7f7bk=",
+    "last_login": null,
+    "is_superuser": true,
+    "username": "Netcom",
+    "first_name": "Netcom",
+    "last_name": "Admin",
+    "email": "admin@netcomcomputers.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-11-23T06:57:06.107Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "3tc6vpiccs0qz52yqj8rtfni7i9o0eiy",
+  "fields": {
+    "session_data": ".eJxVzEEOwiAQheG7sDakMLQwLnXlwjMQYIbQaGrjtG6MdzdNutDt9_L-t4ppXVpchZ9xJHVUqA6_llO58bQNaZ5FbyZ6R9HnJHyZhCcZl_HF1wfx_bQ__jItSdsaOBQHlTIgDdX0NRfsHAN4ZDaGoAuhBvDV9WCDzWQITO5tRuOxWFafL51uOmY:1xVO7e:Oh5AIpeXKRbmgdeSKvqtS0pk-7OzQLo18X1xbKXv0bk",
+    "expire_date": "2026-12-07T07:05:54.304Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "48lvssyc0akinsmxlzp2ytj5oa62o792",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQRf-FtSFApzxcuvcbCDMMUjU0Ke3K-O_apAvd3nPOfYmYtrXGrfMSpyzOQovT74aJHtx2kO-p3WZJc1uXCeWuyIN2eZ0zPy-H-3dQU6_fmq0qxQZg4wzZYsF4ZYAJADyhG_yQEUIwLutUdECiXKwdjfMwBlRKvD_UvjdZ:1xNqiZ:hwSKhcRCXToI-EOxHt2Mb84RhiKxfNCjtkLDf7zVKfI",
+    "expire_date": "2026-11-16T12:00:51.051Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "883twh6esuv5q8mwu056ejk4iolrv6cu",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQRf-FtSE8C7h07zeQGQakaiAp7cr479qkC93ec859sQjbWuM28hJnYmem2el3Q0iP3HZAd2i3zlNv6zIj3xV-0MGvnfLzcrh_BxVG_dbKhmygeJMSZu2cVcZTFr5MMIEmqyEJiTaQ9B5TQWmERSJUpFVwSrD3B_N7OCo:1xHElq:iXL-p2e2MXYIBNErIfENpy6Dym4Zta61vpsapa_EaIo",
+    "expire_date": "2026-10-29T06:16:54.393Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "8oanphys1qaidgc2k708jc2zph954lnn",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQAP9lz4YA3fLo0bvfQNgFpGpoUtqT8d9Nkx70OjOZN4S4bzXsPa9hTjCBgssvo8jP3A6RHrHdF8FL29aZxJGI03ZxW1J-Xc_2b1BjrzBBNrIU4zFrq9kUg9pJjZkR0THZwQ2J0Httk4pFeWJOxZhRW4ejJynh8wXUvjdZ:1xQfM6:qwnQgjgTU0Qk5ERcqWhQBHLb2bQHhcQpYecpvqtXDwc",
+    "expire_date": "2026-11-24T06:29:18.142Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "8qmijeiw3nev3c4fl5c0dq01b3w1hcxf",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQRf-FtSE8C7h07zeQGQakaiAp7cr479qkC93ec859sQjbWuM28hJnYmem2el3Q0iP3HZAd2i3zlNv6zIj3xV-0MGvnfLzcrh_BxVG_dbKhmygeJMSZu2cVcZTFr5MMIEmqyEJiTaQ9B5TQWmERSJUpFVwSrD3B_N7OCo:1xHEIq:fRRwS1jhG4bTfxXc-2u9GY4t1BLRhQIoH55QWlg2NGI",
+    "expire_date": "2026-10-29T05:46:56.976Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "aqzqn5zxzjjbzia4jituifkxahwh2zby",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQRf-FtSE8C7h07zeQGQakaiAp7cr479qkC93ec859sQjbWuM28hJnYmem2el3Q0iP3HZAd2i3zlNv6zIj3xV-0MGvnfLzcrh_BxVG_dbKhmygeJMSZu2cVcZTFr5MMIEmqyEJiTaQ9B5TQWmERSJUpFVwSrD3B_N7OCo:1xGFnR:9p4ZXl2GwzcsUUVqg29VTiDHd8OwLQhUbpXjssUQZ5k",
+    "expire_date": "2026-10-26T13:10:29.531Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "e928sepvdiaosy29ob8dle03m8hqn2gi",
+  "fields": {
+    "session_data": ".eJxVzEEOwiAQheG7sDakMLQwLnXlwjMQYIbQaGrjtG6MdzdNutDt9_L-t4ppXVpchZ9xJHVUqA6_llO58bQNaZ5FbyZ6R9HnJHyZhCcZl_HF1wfx_bQ__jItSdsaOBQHlTIgDdX0NRfsHAN4ZDaGoAuhBvDV9WCDzWQITO5tRuOxWFafL51uOmY:1xVO7Q:NXF87CWFUGCJD5B-C1WGzLnswEwNh_tOZRQpAhgf_SA",
+    "expire_date": "2026-12-07T07:05:40.788Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "eko2lavo9kp6ro5dusiqwjy2cx0057sa",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQRf-FtSE8C7h07zeQGQakaiAp7cr479qkC93ec859sQjbWuM28hJnYmem2el3Q0iP3HZAd2i3zlNv6zIj3xV-0MGvnfLzcrh_BxVG_dbKhmygeJMSZu2cVcZTFr5MMIEmqyEJiTaQ9B5TQWmERSJUpFVwSrD3B_N7OCo:1xGEaG:6livqw4qTdc2_N1fRKir9oXok5Q7f7cjVzaRtQP5I5g",
+    "expire_date": "2026-10-26T11:52:48.267Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "hiorppmvavvi5b6tbjs1vbq5yr5o9y3q",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQRf-FtSFApzxcuvcbCDMMUjU0Ke3K-O_apAvd3nPOfYmYtrXGrfMSpyzOQovT74aJHtx2kO-p3WZJc1uXCeWuyIN2eZ0zPy-H-3dQU6_fmq0qxQZg4wzZYsF4ZYAJADyhG_yQEUIwLutUdECiXKwdjfMwBlRKvD_UvjdZ:1xGFrp:eynyiWT2fMUxL3aGe9YVXHfUWkVp1mCUnNTUijLF58s",
+    "expire_date": "2026-10-26T13:15:01.772Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "hxah2om3431mielp7jlpa4x8mktbdb2j",
+  "fields": {
+    "session_data": ".eJxVjEEOgjAQRe_StWmcdoYWl-45QzPDtIIaSCisjHdXEha6_e-9_zKJt3VIW81LGtVcjDOn3024f-RpB3rn6Tbbfp7WZRS7K_ag1Xaz5uf1cP8OBq7Dt_YRUZQdtCGKZ0EKJfSCuXWkGBtfzkgiDQFoLESRoQh6CERA3ql5fwDSUjcV:1xGDHz:XCliBQ6FfHEpsQzXRiUf47VeEMKUrgvBiwwzpkwpPsU",
+    "expire_date": "2026-10-26T10:29:51.249Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "i7vtl2fjt97bks82cc3mh8wp51x9qsrb",
+  "fields": {
+    "session_data": ".eJxVzDEOwjAMheG7eEZVIoc07QgTA2eoXNtRI1CocMuCuDuq1AHW79d7bxhoXaZhNX0ORaAHD4dfG4lvWrdA82zNZtbsaM2ZTC_VtFpZykuvD9H7aV_83UxkE_SA6H3S7AVDTEJJOwnCQR1nYRodR3QepQ0aWVSoxa5jpBjGo3LOCT5frso70g:1xVTSw:4662xWUpm5xIhCxCVRHbrjJdJ0Ub4TukX3hgmG1rc7Q",
+    "expire_date": "2026-12-07T12:48:14.589Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "lglo3n3o2n3dtmdjfgotmg9v1gdjkx2c",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQRf-FtSE8C7h07zeQGQakaiAp7cr479qkC93ec859sQjbWuM28hJnYmem2el3Q0iP3HZAd2i3zlNv6zIj3xV-0MGvnfLzcrh_BxVG_dbKhmygeJMSZu2cVcZTFr5MMIEmqyEJiTaQ9B5TQWmERSJUpFVwSrD3B_N7OCo:1xNqiC:XYJIJtQc6oqg1Zo-fEmEx3M6q8oGdzo44KUHv8wp0yc",
+    "expire_date": "2026-11-16T12:00:28.652Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "r9hawniy347bad7txnekmhv8j1k2gl78",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQAP9lz4bwLLRH734D2WXBVg0kpT0Z_9006UGvM5N5Q8R9m-Pe8xoXhgkMXH4ZYXrmegh-YL03kVrd1oXEkYjTdnFrnF_Xs_0bzNhnmEC7MVsswaZE2XjvtA2cZSgDDmjYGUxSkRtZhUCpkLLSETNpNnr0WsLnC_N7OCo:1xQfMF:Apz4w8du0IktNhhkmDotVrh8_LrbMrWR-yr1Re8X2ko",
+    "expire_date": "2026-11-24T06:29:27.959Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "t51yyz3by9pbxwb73dvoj6c2f7cx0agw",
+  "fields": {
+    "session_data": ".eJxVjEEOgjAQRe_StWmcdoYWl-45QzPDtIIaSCisjHdXEha6_e-9_zKJt3VIW81LGtVcjDOn3024f-RpB3rn6Tbbfp7WZRS7K_ag1Xaz5uf1cP8OBq7Dt_YRUZQdtCGKZ0EKJfSCuXWkGBtfzkgiDQFoLESRoQh6CERA3ql5fwDSUjcV:1xHGqX:1eUbogVgEP8j5XsK73SJrPzn4OnLPez3j1FRqaVmfxQ",
+    "expire_date": "2026-10-29T08:29:53.408Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "uk9t2abft0wo9uxt8povflar21ppfe4o",
+  "fields": {
+    "session_data": ".eJxVzDEOwjAMheG7eEZVIoc07QgTA2eoXNtRI1CocMuCuDuq1AHW79d7bxhoXaZhNX0ORaAHD4dfG4lvWrdA82zNZtbsaM2ZTC_VtFpZykuvD9H7aV_83UxkE_SA6H3S7AVDTEJJOwnCQR1nYRodR3QepQ0aWVSoxa5jpBjGo3LOCT5frso70g:1xVT0J:U-OTn2PC_PQKRlxL8GjCLxMXO45bwl3xRwFg7R_hWXM",
+    "expire_date": "2026-12-07T12:18:39.759Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "uxqcbqrs7mtbbuf89ulr8ihzqb377crk",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQRf-FtSE8C7h07zeQGQakaiAp7cr479qkC93ec859sQjbWuM28hJnYmem2el3Q0iP3HZAd2i3zlNv6zIj3xV-0MGvnfLzcrh_BxVG_dbKhmygeJMSZu2cVcZTFr5MMIEmqyEJiTaQ9B5TQWmERSJUpFVwSrD3B_N7OCo:1xNqij:w175_FMyd9LqZRSuwxGAiV9mWduac3Ft9oWbbg2mKDU",
+    "expire_date": "2026-11-16T12:01:01.042Z"
+  }
+},
+{
+  "model": "sessions.session",
+  "pk": "wxsersetp2pyux3ubbvah8dpo5ydy8zb",
+  "fields": {
+    "session_data": ".eJxVjMsOwiAQRf-FtSFApzxcuvcbCDMMUjU0Ke3K-O_apAvd3nPOfYmYtrXGrfMSpyzOQovT74aJHtx2kO-p3WZJc1uXCeWuyIN2eZ0zPy-H-3dQU6_fmq0qxQZg4wzZYsF4ZYAJADyhG_yQEUIwLutUdECiXKwdjfMwBlRKvD_UvjdZ:1xGFdl:9zG8NSd1TL61c_z_ZJ6PoWUeN-4js3Nv_ddzoeCph18",
+    "expire_date": "2026-10-26T13:00:29.434Z"
+  }
+},
+{
+  "model": "users.useractivesession",
+  "pk": 5,
+  "fields": {
+    "user": [
+      "NETCOM"
+    ],
+    "session_key": "i7vtl2fjt97bks82cc3mh8wp51x9qsrb",
+    "last_activity": "2026-11-23T12:48:14.584Z"
+  }
+},
+{
+  "model": "departments.department",
+  "pk": 1,
+  "fields": {
+    "name": "Management",
+    "code": "MGT",
+    "description": "Executive and Administrative Leadership",
+    "created_at": "2026-10-12T07:31:25.504Z"
+  }
+},
+{
+  "model": "departments.department",
+  "pk": 2,
+  "fields": {
+    "name": "Human Resource",
+    "code": "HR",
+    "description": "People Operations & Talent",
+    "created_at": "2026-10-12T07:31:25.506Z"
+  }
+},
+{
+  "model": "departments.department",
+  "pk": 3,
+  "fields": {
+    "name": "IT",
+    "code": "IT",
+    "description": "Software Development & Systems",
+    "created_at": "2026-10-12T07:31:25.509Z"
+  }
+},
+{
+  "model": "departments.department",
+  "pk": 4,
+  "fields": {
+    "name": "Administration",
+    "code": "ADM",
+    "description": "General Administration & Facilities",
+    "created_at": "2026-10-12T07:31:25.510Z"
+  }
+},
+{
+  "model": "departments.department",
+  "pk": 5,
+  "fields": {
+    "name": "developer",
+    "code": "DEV",
+    "description": "developer Department",
+    "created_at": "2026-10-12T07:31:26.350Z"
+  }
+},
+{
+  "model": "departments.department",
+  "pk": 6,
+  "fields": {
+    "name": "Technology",
+    "code": "TECH",
+    "description": "",
+    "created_at": "2026-11-21T10:56:32.933Z"
+  }
+},
+{
+  "model": "departments.department",
+  "pk": 7,
+  "fields": {
+    "name": "T",
+    "code": "T",
+    "description": "",
+    "created_at": "2026-11-23T07:05:39.604Z"
+  }
+},
+{
+  "model": "departments.designation",
+  "pk": 1,
+  "fields": {
+    "department": 1,
+    "title": "System Admin",
+    "description": ""
+  }
+},
+{
+  "model": "departments.designation",
+  "pk": 2,
+  "fields": {
+    "department": 2,
+    "title": "HR Manager",
+    "description": ""
+  }
+},
+{
+  "model": "departments.designation",
+  "pk": 3,
+  "fields": {
+    "department": 3,
+    "title": "Frontend Developer",
+    "description": ""
+  }
+},
+{
+  "model": "departments.designation",
+  "pk": 4,
+  "fields": {
+    "department": 5,
+    "title": "developer",
+    "description": ""
+  }
+},
+{
+  "model": "departments.designation",
+  "pk": 5,
+  "fields": {
+    "department": 6,
+    "title": "Software Engineer",
+    "description": ""
+  }
+},
+{
+  "model": "departments.branch",
+  "pk": 1,
+  "fields": {
+    "name": "Netcom Head Office",
+    "code": "NETCOM-HQ",
+    "address": "Netcom Computers Pvt Ltd, Main Campus",
+    "latitude": "12.971600",
+    "longitude": "77.594600",
+    "radius_meters": 100,
+    "is_active": true,
+    "created_at": "2026-11-23T06:52:22.535Z",
+    "updated_at": "2026-11-23T06:52:22.535Z"
+  }
+},
+{
+  "model": "departments.branch",
+  "pk": 2,
+  "fields": {
+    "name": "Netcom Admin Campus",
+    "code": "NETCOM-ADMIN-HQ",
+    "address": "Netcom Executive Campus",
+    "latitude": "13.082680",
+    "longitude": "80.270718",
+    "radius_meters": 100,
+    "is_active": true,
+    "created_at": "2026-11-23T06:52:22.639Z",
+    "updated_at": "2026-11-23T06:52:22.639Z"
+  }
+},
+{
+  "model": "departments.branch",
+  "pk": 3,
+  "fields": {
+    "name": "Test HQ",
+    "code": "THQ",
+    "address": "",
+    "latitude": "12.971600",
+    "longitude": "77.594600",
+    "radius_meters": 100,
+    "is_active": true,
+    "created_at": "2026-11-23T07:05:40.098Z",
+    "updated_at": "2026-11-23T07:05:40.098Z"
+  }
+},
+{
+  "model": "employees.employee",
+  "pk": 1,
+  "fields": {
+    "user": [
+      "NETCOM"
+    ],
+    "employee_code": "ADM001",
+    "role": "ADMIN",
+    "department": 1,
+    "designation": 1,
+    "branch": null,
+    "is_offsite_employee": false,
+    "phone": "9876543200",
+    "address": "Tamil Nadu",
+    "joining_date": "2026-06-19",
+    "basic_salary": "60000.00",
+    "casual_leave_balance": 1,
+    "raw_password": "Netcom@2026@Netcom",
+    "profile_picture": "employee_documents/test_photo.png",
+    "document": "employee_documents/test_doc.pdf",
+    "is_active_employee": true,
+    "created_at": "2026-10-12T07:31:26.330Z",
+    "updated_at": "2026-11-23T12:48:14.562Z"
+  }
+},
+{
+  "model": "employees.employee",
+  "pk": 2,
+  "fields": {
+    "user": [
+      "hr"
+    ],
+    "employee_code": "HR001",
+    "role": "HR",
+    "department": 2,
+    "designation": 2,
+    "branch": null,
+    "is_offsite_employee": false,
+    "phone": "9876543210",
+    "address": "Tamil Nadu",
+    "joining_date": "2026-06-19",
+    "basic_salary": "60000.00",
+    "casual_leave_balance": 1,
+    "raw_password": "hr12345",
+    "profile_picture": "",
+    "document": "",
+    "is_active_employee": true,
+    "created_at": "2026-10-12T07:31:26.338Z",
+    "updated_at": "2026-10-12T11:25:52.102Z"
+  }
+},
+{
+  "model": "employees.employee",
+  "pk": 5,
+  "fields": {
+    "user": [
+      "emp1"
+    ],
+    "employee_code": "202612",
+    "role": "HR",
+    "department": null,
+    "designation": 4,
+    "branch": null,
+    "is_offsite_employee": false,
+    "phone": "+91 63693 58582",
+    "address": "",
+    "joining_date": "2026-10-12",
+    "basic_salary": "15000.00",
+    "casual_leave_balance": 1,
+    "raw_password": "emp12345",
+    "profile_picture": "employee_documents/386984146_73cf8ac6-31c7-448b-aa3b-0840d9b313a7.jpg",
+    "document": "",
+    "is_active_employee": true,
+    "created_at": "2026-10-12T11:10:36.449Z",
+    "updated_at": "2026-10-12T11:25:49.942Z"
+  }
+},
+{
+  "model": "employees.employee",
+  "pk": 7,
+  "fields": {
+    "user": [
+      "Netcom"
+    ],
+    "employee_code": "NETCOM01",
+    "role": "ADMIN",
+    "department": null,
+    "designation": null,
+    "branch": null,
+    "is_offsite_employee": false,
+    "phone": "",
+    "address": "",
+    "joining_date": "2026-11-23",
+    "basic_salary": "0.00",
+    "casual_leave_balance": 0,
+    "raw_password": "Netcom@2026#Admin",
+    "profile_picture": "",
+    "document": "",
+    "is_active_employee": true,
+    "created_at": "2026-11-23T06:57:06.415Z",
+    "updated_at": "2026-11-23T06:57:06.526Z"
+  }
+},
+{
+  "model": "leave_management.monthlypermissionbalance",
+  "pk": 8,
+  "fields": {
+    "employee": 5,
+    "year": 2026,
+    "month": 11,
+    "total_hours_allowed": "4.00",
+    "used_hours": "0.00",
+    "total_requests_allowed": 2,
+    "used_requests_count": 0,
+    "created_at": "2026-11-23T12:18:40.382Z",
+    "updated_at": "2026-11-23T12:18:40.382Z"
+  }
+},
+{
+  "model": "payroll.salarystructure",
+  "pk": 1,
+  "fields": {
+    "employee": 1,
+    "basic_salary": "60000.00",
+    "hra": "8000.00",
+    "allowances": "4000.00",
+    "pf_deduction": "1800.00",
+    "tax_deduction": "1200.00",
+    "updated_at": "2026-10-12T07:31:26.333Z"
+  }
+},
+{
+  "model": "payroll.salarystructure",
+  "pk": 2,
+  "fields": {
+    "employee": 2,
+    "basic_salary": "60000.00",
+    "hra": "8000.00",
+    "allowances": "4000.00",
+    "pf_deduction": "1800.00",
+    "tax_deduction": "1200.00",
+    "updated_at": "2026-10-12T07:31:26.341Z"
+  }
+},
+{
+  "model": "dashboard.dashboardbanner",
+  "pk": 1,
+  "fields": {
+    "title": "Netcom HR Announcement",
+    "image": "dashboard_banners/சனன_எறமபன_பரய_உதவ.png",
+    "banner_height": "185px",
+    "banner_width": "100%",
+    "uploaded_by": [
+      "hr"
+    ],
+    "is_active": false,
+    "created_at": "2026-10-12T10:06:15.954Z",
+    "updated_at": "2026-10-12T10:06:15.954Z"
+  }
+},
+{
+  "model": "dashboard.dashboardbanner",
+  "pk": 2,
+  "fields": {
+    "title": "Netcom HR Announcement",
+    "image": "dashboard_banners/netcom_logo_1.png",
+    "banner_height": "185px",
+    "banner_width": "100%",
+    "uploaded_by": [
+      "hr"
+    ],
+    "is_active": true,
+    "created_at": "2026-10-12T10:30:21.646Z",
+    "updated_at": "2026-10-12T10:30:21.646Z"
+  }
+}
+]

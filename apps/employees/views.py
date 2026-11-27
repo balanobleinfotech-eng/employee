@@ -173,25 +173,25 @@ def employee_delete(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     current_profile = getattr(request.user, 'employee', None)
     is_admin = request.user.is_superuser or (current_profile and current_profile.role == 'ADMIN')
+    is_hr = current_profile and current_profile.role == 'HR'
 
-    # Main admin (NETCOM or superuser) can NEVER be deleted
-    if employee.user.username.upper() == 'NETCOM' or employee.user.is_superuser:
-        messages.error(request, "The main system administrator (NETCOM) cannot be deleted under any circumstances.")
+    # Admin and HR accounts are strictly protected system accounts and can NEVER be deleted
+    if employee.role in ('ADMIN', 'HR') or employee.user.is_superuser or employee.user.is_staff:
+        messages.error(
+            request,
+            f"Protected System Account: {employee.get_role_display()} accounts ({employee.display_name()}) "
+            "are protected and cannot be deleted under any circumstances."
+        )
         return redirect(request.META.get('HTTP_REFERER') or 'dashboard:index')
 
-    if employee.user == request.user:
-        messages.error(request, "You cannot delete your own active account.")
-        return redirect(request.META.get('HTTP_REFERER') or 'dashboard:index')
-
-    # HR cannot delete an administrator
-    if not is_admin and employee.role == 'ADMIN':
-        messages.error(request, "HR Managers cannot delete Administrator accounts.")
+    if not is_admin and not is_hr:
+        messages.error(request, "Permission denied: Only Administrators and HR can remove employee accounts.")
         return redirect(request.META.get('HTTP_REFERER') or 'dashboard:index')
 
     name = employee.display_name()
     user = employee.user
     user.delete()  # Cascades to employee
-    messages.success(request, f"Account and records for '{name}' deleted permanently.")
+    messages.success(request, f"Employee account and records for '{name}' deleted permanently.")
     return redirect(request.META.get('HTTP_REFERER') or 'dashboard:index')
 
 

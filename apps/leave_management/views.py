@@ -196,6 +196,8 @@ def leave_list(request):
                 leave_type='Permission (Up to 2 Hours)',
                 from_date=perm_date,
                 to_date=perm_date,
+                start_time=t_from,
+                end_time=t_to,
                 total_days=1,
                 is_paid=True,
                 approval_type=f"Permission ({dur_str})",
@@ -281,17 +283,20 @@ def leave_status_update(request, pk, status=None):
                 leave.reviewed_by = request.user
                 leave.save()
 
-                # Parse duration in minutes from leave reason
-                dur_hm = re.search(r'\((\d+)h\s*(\d*)m?\)', leave.reason)
-                dur_match = re.search(r'\((\d+)\s*mins?\)', leave.reason)
-                if dur_hm:
-                    h_val = int(dur_hm.group(1))
-                    m_val = int(dur_hm.group(2)) if dur_hm.group(2) else 0
-                    dur_in_mins = h_val * 60 + m_val
-                elif dur_match:
-                    dur_in_mins = int(dur_match.group(1))
+                # Parse duration in minutes from leave model fields or reason text
+                if leave.start_time and leave.end_time:
+                    dur_in_mins = leave.permission_duration_minutes
                 else:
-                    dur_in_mins = 120
+                    dur_hm = re.search(r'\((\d+)h\s*(\d*)m?\)', leave.reason)
+                    dur_match = re.search(r'\((\d+)\s*mins?\)', leave.reason)
+                    if dur_hm:
+                        h_val = int(dur_hm.group(1))
+                        m_val = int(dur_hm.group(2)) if dur_hm.group(2) else 0
+                        dur_in_mins = h_val * 60 + m_val
+                    elif dur_match:
+                        dur_in_mins = int(dur_match.group(1))
+                    else:
+                        dur_in_mins = 120
                 perm_hrs = Decimal(str(round(dur_in_mins / 60.0, 2)))
 
                 # Deduct from MonthlyPermissionBalance upon fresh approval

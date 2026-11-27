@@ -20,6 +20,8 @@ class LeaveRequest(models.Model):
     leave_type = models.CharField(max_length=50, choices=LEAVE_TYPES, default='Casual Leave')
     from_date = models.DateField()
     to_date = models.DateField()
+    start_time = models.TimeField(null=True, blank=True, verbose_name="Permission Start Time")
+    end_time = models.TimeField(null=True, blank=True, verbose_name="Permission End Time")
     total_days = models.PositiveIntegerField(default=1)
     reason = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
@@ -33,6 +35,27 @@ class LeaveRequest(models.Model):
         ordering = ['-applied_on', '-id']
         verbose_name = 'Leave Request'
         verbose_name_plural = 'Leave Requests'
+
+    @property
+    def is_permission_type(self):
+        return self.leave_type in ('Permission (Up to 2 Hours)', 'Permission') or 'Permission' in self.approval_type
+
+    @property
+    def permission_duration_minutes(self):
+        if self.start_time and self.end_time:
+            from datetime import datetime, date
+            st = datetime.combine(date.min, self.start_time)
+            et = datetime.combine(date.min, self.end_time)
+            if et < st:
+                et += datetime.timedelta(days=1)
+            return max(0, int((et - st).total_seconds() // 60))
+        return 0
+
+    @property
+    def permission_time_display(self):
+        if self.start_time and self.end_time:
+            return f"{self.start_time.strftime('%I:%M %p')} – {self.end_time.strftime('%I:%M %p')}"
+        return "-"
 
     def save(self, *args, **kwargs):
         if self.from_date and self.to_date:

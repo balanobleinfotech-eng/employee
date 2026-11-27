@@ -513,40 +513,76 @@
     </button>
   </div>
   <div class="panel-body">
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
       {% for dev in biometric_devices %}
-      <div style="background: #ffffff; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+      <div style="background: #ffffff; border: 1.5px solid {% if dev.is_active %}#bbf7d0{% else %}#e2e8f0{% endif %}; border-radius: var(--radius-sm); padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
         <div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <b style="font-size: 15px; color: #0f172a;">{{ dev.name }}</b>
-            <span class="badge {% if dev.is_active %}badge-success{% else %}badge-gray{% endif %}">{{ dev.protocol }}</span>
+            <b style="font-size: 15px; color: #0f172a;">📟 {{ dev.name }}</b>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              {% if dev.is_active %}
+              <span class="badge badge-success" style="font-weight: 700; font-size: 11px;">🟢 Connected</span>
+              {% else %}
+              <span class="badge" style="background: #f1f5f9; color: #64748b; font-weight: 700; font-size: 11px;">⚪ Disconnected</span>
+              {% endif %}
+              <span class="badge badge-outline" style="font-size: 11px;">{{ dev.protocol }}</span>
+            </div>
           </div>
-          <div style="font-size: 12.5px; color: #475569; line-height: 1.5;">
-            <div>🌐 IP: <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #1e293b;">{{ dev.ip_address }}:{{ dev.port }}</code></div>
-            <div>📟 Model: <b>{{ dev.device_model }}</b></div>
-            <div style="margin-top: 4px;">📡 Status: <b style="color: {% if dev.last_status == 'OK' or dev.last_status == 'Online' %}#16a34a{% else %}#dc2626{% endif %};">{{ dev.last_status }}</b></div>
-            <div>🕒 Last Sync: <span style="color: #64748b;">{{ dev.last_sync|date:"M d, Y H:i"|default:"Never" }}</span></div>
+          <div style="font-size: 12.5px; color: #475569; line-height: 1.6;">
+            <div>🌐 <b>IP Address:</b> <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #1e293b;">{{ dev.ip_address }}:{{ dev.port }}</code></div>
+            <div>📟 <b>Device Model:</b> <span>{{ dev.device_model }}</span></div>
+            <div>🔑 <b>Com Key:</b> <code>{{ dev.communication_key|default:"0" }}</code></div>
+            <div style="margin-top: 4px;">📡 <b>Status:</b> <b style="color: {% if 'Connected' in dev.last_status or 'Online' in dev.last_status %}#16a34a{% elif 'Disconnected' in dev.last_status %}#64748b{% else %}#dc2626{% endif %};">{{ dev.last_status }}</b></div>
+            <div>🕒 <b>Last Sync:</b> <span style="color: #64748b;">{{ dev.last_sync|date:"M d, Y H:i"|default:"Never" }}</span></div>
           </div>
         </div>
 
-        <div style="display: flex; gap: 8px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--gray-100);">
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--gray-100); align-items: center;">
+          {% if dev.is_active %}
+          <form method="POST" action="{% url 'attendance:device_manage' %}" style="margin: 0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="disconnect_device">
+            <input type="hidden" name="device_id" value="{{ dev.id }}">
+            <button type="submit" class="btn btn-outline btn-sm" style="color: #64748b; border-color: #cbd5e1; display: inline-flex; align-items: center; gap: 4px;" title="Disconnect this machine from the network">
+              🔌 Disconnect
+            </button>
+          </form>
+          {% else %}
+          <form method="POST" action="{% url 'attendance:device_manage' %}" style="margin: 0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="connect_device">
+            <input type="hidden" name="device_id" value="{{ dev.id }}">
+            <button type="submit" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 4px;" title="Connect this machine to the network">
+              ⚡ Connect
+            </button>
+          </form>
+          {% endif %}
+
           <form method="POST" action="{% url 'attendance:device_manage' %}" style="margin: 0;">
             {% csrf_token %}
             <input type="hidden" name="action" value="test_device">
             <input type="hidden" name="device_id" value="{{ dev.id }}">
-            <button type="submit" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 4px;">⚡ Ping Test</button>
+            <button type="submit" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 4px;" title="Test network socket reachability">
+              📡 Test Connection
+            </button>
           </form>
+
           <form method="POST" action="{% url 'attendance:device_manage' %}" style="margin: 0;">
             {% csrf_token %}
             <input type="hidden" name="action" value="sync_device">
             <input type="hidden" name="device_id" value="{{ dev.id }}">
-            <button type="submit" class="btn btn-success btn-sm" style="display: inline-flex; align-items: center; gap: 4px;">🔄 Sync Punches</button>
+            <button type="submit" class="btn btn-success btn-sm" style="display: inline-flex; align-items: center; gap: 4px;" title="Pull latest punches without duplicates" {% if not dev.is_active %}disabled style="opacity: 0.5;"{% endif %}>
+              🔄 Sync
+            </button>
           </form>
-          <form method="POST" action="{% url 'attendance:device_manage' %}" style="margin: 0;" onsubmit="return confirm('Permanently remove biometric terminal {{ dev.name }}?');">
+
+          <form method="POST" action="{% url 'attendance:device_manage' %}" style="margin: 0;" onsubmit="return confirm('Permanently remove biometric attendance machine {{ dev.name }} ({{ dev.ip_address }})?');">
             {% csrf_token %}
-            <input type="hidden" name="action" value="delete_device">
+            <input type="hidden" name="action" value="remove_device">
             <input type="hidden" name="device_id" value="{{ dev.id }}">
-            <button type="submit" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center; gap: 4px;">🗑️ Delete</button>
+            <button type="submit" class="btn btn-danger btn-sm" style="display: inline-flex; align-items: center; gap: 4px;" title="Remove this biometric machine">
+              🗑️ Remove Machine
+            </button>
           </form>
         </div>
       </div>
@@ -950,10 +986,12 @@
               <button type="button" onclick="openHrLeaveModal('{{ emp.id }}')" class="btn btn-outline btn-sm" title="Grant Leave or 2h Permission">
                 📅 Leave
               </button>
-              {% if emp.user.username != 'NETCOM' and not emp.user.is_superuser and emp.role != 'ADMIN' and emp.user != request.user %}
+              {% if emp.role != 'ADMIN' and emp.role != 'HR' and not emp.user.is_superuser and not emp.user.is_staff and emp.user != request.user %}
               <a href="{% url 'employees:delete' emp.id %}" class="btn btn-danger btn-sm" title="Delete Employee" onclick="return confirm('Permanently delete {{ emp.display_name }}?');">
                 🗑️ Delete
               </a>
+              {% elif emp.role == 'ADMIN' or emp.role == 'HR' %}
+              <span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 10.5px; padding: 4px 8px; border: 1px solid #e2e8f0;" title="Protected System Account (Cannot be deleted)">🔒 Protected</span>
               {% endif %}
             </div>
           </td>

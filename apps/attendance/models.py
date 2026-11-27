@@ -87,44 +87,76 @@ class Attendance(models.Model):
         except Exception:
             return 0
 
-    def get_approved_permission_minutes(self):
-        """
-        Calculates approved permission time in minutes (minimum 30 mins, maximum 120 mins).
-        Pending, rejected, or cancelled permissions MUST NOT be added.
-        """
+    def get_approved_permission_record(self):
+        """Returns the approved LeaveRequest permission record for this date if one exists."""
         from apps.leave_management.models import LeaveRequest
         try:
-            perm_requests = LeaveRequest.objects.filter(
+            return LeaveRequest.objects.filter(
                 employee=self.employee,
                 from_date=self.date,
+                status='Approved',
                 leave_type__in=['Permission', 'Permission (Up to 2 Hours)']
-            )
-            approved_leave = perm_requests.filter(status='Approved').first()
-            if approved_leave:
-                dur_hm = re.search(r'\((\d+)h\s*(\d*)m?\)', approved_leave.reason or '')
-                dur_match = re.search(r'\((\d+)\s*mins?\)', approved_leave.reason or '')
-                if dur_hm:
-                    h_val = int(dur_hm.group(1))
-                    m_val = int(dur_hm.group(2)) if dur_hm.group(2) else 0
-                    mins = h_val * 60 + m_val
-                elif dur_match:
-                    mins = int(dur_match.group(1))
-                elif self.permission_hours and self.permission_hours > 0:
-                    mins = int(float(self.permission_hours) * 60)
-                else:
-                    mins = 120
-                return max(30, min(120, mins))
-
-            # Exclude pending/rejected/cancelled permission requests
-            if perm_requests.exists():
-                return 0
+            ).first()
         except Exception:
-            pass
+            return None
+
+    @property
+    def effective_in_time(self):
+        """
+        Calculates effective working start time considering approved morning permission.
+        Example: Employee arrives at 10:00 AM with approved permission 09:00 AM - 10:00 AM.
+        System calculates employee working hours starting from 09:00 AM.
+        """
+        if not self.in_time:
+            return None
+        perm = self.get_approved_permission_record()
+        if perm and perm.start_time and perm.end_time:
+            if perm.start_time < self.in_time and perm.end_time >= self.in_time:
+                return perm.start_time
+        return self.in_time
+
+    @property
+    def effective_out_time(self):
+        """
+        Calculates effective working end time considering approved evening permission.
+        Example: Employee leaves at 05:00 PM with approved permission 05:00 PM - 06:00 PM.
+        System calculates employee working hours extending to 06:00 PM.
+        """
+        if not self.out_time:
+            return None
+        perm = self.get_approved_permission_record()
+        if perm and perm.start_time and perm.end_time:
+            if perm.start_time <= self.out_time and perm.end_time > self.out_time:
+                return perm.end_time
+        return self.out_time
+
+    def get_approved_permission_minutes(self):
+        """
+        Calculates approved permission time in minutes.
+        Pending, rejected, or cancelled permissions MUST NOT be added.
+        """
+        perm = self.get_approved_permission_record()
+        if perm:
+            if perm.start_time and perm.end_time:
+                mins = perm.permission_duration_minutes
+                if mins > 0:
+                    return mins
+            dur_hm = re.search(r'\((\d+)h\s*(\d*)m?\)', perm.reason or '')
+            dur_match = re.search(r'\((\d+)\s*mins?\)', perm.reason or '')
+            if dur_hm:
+                h_val = int(dur_hm.group(1))
+                m_val = int(dur_hm.group(2)) if dur_hm.group(2) else 0
+                return h_val * 60 + m_val
+            elif dur_match:
+                return int(dur_match.group(1))
+            elif self.permission_hours and self.permission_hours > 0:
+                return int(float(self.permission_hours) * 60)
+            return 120
 
         # Standalone Attendance permission flag (only if explicitly approved)
         if self.is_permission and self.permission_hours and self.permission_hours > 0:
             mins = int(float(self.permission_hours) * 60)
-            return max(30, min(120, mins))
+            return mins
 
         return 0
 

@@ -163,12 +163,12 @@
             <div style="display: inline-flex; gap: 4px;">
               <a href="{% url 'employees:detail' emp.id %}" class="btn btn-outline btn-sm" style="padding: 3px 6px; font-size: 12px;" title="View Dossier">👁️</a>
               <a href="{% url 'employees:edit' emp.id %}" class="btn btn-outline btn-sm" style="padding: 3px 6px; font-size: 12px;" title="Edit">✏️</a>
-              {% if emp.user.username != 'NETCOM' and not emp.user.is_superuser and emp.user != request.user %}
+              {% if emp.role != 'ADMIN' and emp.role != 'HR' and not emp.user.is_superuser and not emp.user.is_staff and emp.user != request.user %}
                 {% if current_profile.role == 'ADMIN' or request.user.is_superuser %}
                 <a href="{% url 'employees:delete' emp.id %}" class="btn btn-danger btn-sm" style="padding: 3px 6px; font-size: 12px;" title="Delete Employee" onclick="return confirm('Permanently delete {{ emp.display_name }}?');">🗑️</a>
-                {% elif current_profile.role == 'HR' and emp.role != 'ADMIN' %}
-                <a href="{% url 'employees:delete' emp.id %}" class="btn btn-danger btn-sm" style="padding: 3px 6px; font-size: 12px;" title="Delete Employee" onclick="return confirm('Permanently delete {{ emp.display_name }}?');">🗑️</a>
                 {% endif %}
+              {% elif emp.role == 'ADMIN' or emp.role == 'HR' %}
+                <span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 10.5px; padding: 2px 6px; border: 1px solid #e2e8f0;" title="Protected System Account (Cannot be deleted)">🔒 Protected</span>
               {% endif %}
             </div>
           </td>

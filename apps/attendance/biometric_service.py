@@ -37,6 +37,9 @@ def sync_biometric_device(device: BiometricDevice, user=None, simulated_logs=Non
     Connects to biometric machine, pulls punch records, and synchronizes
     with Attendance table without duplicate entries.
     """
+    if not device.is_active:
+        return 0, f"Biometric machine '{device.name}' is currently disconnected. Please connect the device first."
+
     records_synced = 0
     now = timezone.now()
 

@@ -145,9 +145,21 @@
             {% endif %}
             <td>
               <b>{{ l.leave_type }}</b>
-              {% if l.approval_type and l.approval_type != l.leave_type %}
+              {% if l.is_permission_type %}
+                <div style="font-size: 11.5px; color: #2563eb; font-weight: 600; margin-top: 2px;">
+                  🕒 Requested: {{ l.permission_time_display }}
+                </div>
+                {% if l.status == 'Approved' %}
+                <div style="font-size: 11px; color: #16a34a; font-weight: 600;">
+                  ✅ Approved Time: {{ l.approval_type }}
+                </div>
+                {% endif %}
+              {% elif l.approval_type and l.approval_type != l.leave_type %}
               <div style="font-size: 11px; color: #64748b;">{{ l.approval_type }}</div>
               {% endif %}
+              <div style="font-size: 11.5px; color: #475569; margin-top: 3px; max-width: 220px; line-height: 1.3;">
+                {{ l.reason }}
+              </div>
             </td>
             <td style="white-space: nowrap;">{{ l.from_date|date:"M d" }} - {{ l.to_date|date:"M d" }}</td>
             <td><b>{{ l.total_days }}d</b></td>

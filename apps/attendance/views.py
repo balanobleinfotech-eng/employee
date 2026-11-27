@@ -388,18 +388,38 @@ def mark_official_duty(request):
 @login_required
 @hr_or_admin_required
 def device_manage(request):
-    """Allows Admin/HR to register biometric devices or trigger automated sync."""
+    """Allows Admin/HR to register biometric devices, connect/disconnect, test, or trigger automated sync."""
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'add_device':
             form = BiometricDeviceForm(request.POST)
             if form.is_valid():
-                device = form.save()
-                messages.success(request, f"Biometric device '{device.name}' added successfully.")
+                device = form.save(commit=False)
+                device.is_active = True
+                device.save()
+                messages.success(request, f"Biometric machine '{device.name}' added successfully and connected to network.")
             else:
                 for err_list in form.errors.values():
                     for err in err_list:
                         messages.error(request, err)
+        elif action == 'connect_device':
+            device_id = request.POST.get('device_id')
+            device = get_object_or_404(BiometricDevice, id=device_id)
+            device.is_active = True
+            online, msg = test_device_connection(device)
+            device.last_status = "Connected (Online)" if online else f"Connected (Network offline: {msg})"
+            device.save(update_fields=['is_active', 'last_status'])
+            if online:
+                messages.success(request, f"Biometric Machine '{device.name}' is now CONNECTED and reachable at {device.ip_address}:{device.port}.")
+            else:
+                messages.warning(request, f"Biometric Machine '{device.name}' marked CONNECTED, but network socket ping reported: {msg}.")
+        elif action == 'disconnect_device':
+            device_id = request.POST.get('device_id')
+            device = get_object_or_404(BiometricDevice, id=device_id)
+            device.is_active = False
+            device.last_status = "Disconnected (Disabled)"
+            device.save(update_fields=['is_active', 'last_status'])
+            messages.info(request, f"Biometric Machine '{device.name}' has been DISCONNECTED.")
         elif action == 'test_device':
             device_id = request.POST.get('device_id')
             device = get_object_or_404(BiometricDevice, id=device_id)
@@ -411,17 +431,20 @@ def device_manage(request):
         elif action == 'sync_device':
             device_id = request.POST.get('device_id')
             device = get_object_or_404(BiometricDevice, id=device_id)
-            synced, msg = sync_biometric_device(device, user=request.user)
-            if synced > 0:
-                messages.success(request, msg)
+            if not device.is_active:
+                messages.warning(request, f"Cannot sync '{device.name}': Machine is currently DISCONNECTED. Please connect the machine first.")
             else:
-                messages.info(request, msg)
-        elif action == 'delete_device':
+                synced, msg = sync_biometric_device(device, user=request.user)
+                if synced > 0:
+                    messages.success(request, msg)
+                else:
+                    messages.info(request, msg)
+        elif action in ('delete_device', 'remove_device'):
             device_id = request.POST.get('device_id')
             device = get_object_or_404(BiometricDevice, id=device_id)
             dev_name = device.name
             device.delete()
-            messages.success(request, f"Biometric machine '{dev_name}' has been deleted successfully.")
+            messages.success(request, f"Biometric machine '{dev_name}' has been removed successfully.")
 
     return redirect(request.META.get('HTTP_REFERER') or 'attendance:list')
 
@@ -442,9 +465,9 @@ def daily_work_list(request):
 
     mode_filter = request.GET.get('mode', '').strip().lower()
     if mode_filter == 'onsite':
-        works = works.filter(is_offsite=False)
+        works = works.filter(employee__is_offsite_employee=False)
     elif mode_filter == 'offsite':
-        works = works.filter(is_offsite=True)
+        works = works.filter(employee__is_offsite_employee=True)
 
     form = DailyWorkForm()
     if request.method == 'POST':
@@ -456,6 +479,8 @@ def daily_work_list(request):
             work = form.save(commit=False)
             work.employee = profile
             work.date = timezone.localdate()
+            # Work location classification
+            work.is_offsite = bool(form.cleaned_data.get('is_offsite')) or bool(getattr(profile, 'is_offsite_employee', False))
 
             # Attach camera photo if captured via live camera or direct camera input
             if camera_photo_data:
@@ -466,7 +491,7 @@ def daily_work_list(request):
                 work.work_image = camera_photo_file
 
             work.save()
-            mode_badge = "Off-Site (Field/Client)" if work.is_offsite else "On-Site (Office)"
+            mode_badge = "Offsite (Field / Client)" if work.is_offsite else "Onsite (Office)"
             loc_info = f" • Location: {work.location_notes}" if work.location_notes else ""
             if work.work_image:
                 import os
@@ -483,6 +508,10 @@ def daily_work_list(request):
 
     my_work_plans = DailyWorkPlan.objects.filter(employee=profile).order_by('-work_date', '-created_at') if profile else []
 
+    from apps.employees.models import Employee
+    onsite_employees = Employee.objects.filter(is_active_employee=True, is_offsite_employee=False)
+    offsite_employees = Employee.objects.filter(is_active_employee=True, is_offsite_employee=True)
+
     context = {
         'works': works,
         'form': form,
@@ -490,5 +519,7 @@ def daily_work_list(request):
         'profile': profile,
         'my_work_plans': my_work_plans,
         'mode_filter': mode_filter,
+        'onsite_employees': onsite_employees,
+        'offsite_employees': offsite_employees,
     }
     return render(request, 'attendance/daily_work_list.html', context)
